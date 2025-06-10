@@ -1,65 +1,66 @@
-# 🚀 Overview of Pipeline Steps
+# 🔬 Perturb-seq Analysis Pipeline
 
-## 🔹 1. Download Public Perturb-seq Dataset
+This project analyzes public CROP-seq data from A549 cells (GSE149383) to study transcriptional effects of CRISPR-based gene perturbations using a reproducible single-cell RNA-seq pipeline built in Python.
 
-Goal: Automate fetching and extracting real Perturb-seq data
+## 📊 Dataset
 
-Tool: wget, tar, gunzip
+**Citation:**  
+Replogle et al. (2020). *Direct capture of CRISPR guides enables scalable, multiplexed, and multi-omic Perturb-seq*. Cell.  
+GEO Accession: [GSE149383](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE149383)
 
-## 🔹 2. Preprocess scRNA-seq Data + Guide Assignments
+- Cell line: A549 (lung cancer)
+- Platform: CRISPRi + 10x Genomics
+- Perturbations: Targeted gene knockdowns via CROP-seq
 
-Goal: Load 10x-style count matrix and merge with sgRNA annotations
+## 🛠️ Tech Stack
 
-Tool: scanpy, pandas, anndata
+- Python 3.10
+- [Scanpy](https://scanpy.readthedocs.io/)
+- [gseapy](https://gseapy.readthedocs.io/)
+- pandas, seaborn, matplotlib
 
-## 🔹 3. Quality Control (QC)
+## 📈 Key Results
 
-Goal: Filter low-quality cells, genes, and empty droplets
+- UMAP plots to visualize cell states by perturbation
+- Identification of differentially expressed (DE) genes
+- Functional enrichment of DE genes (GO / KEGG pathways)
 
-Tool: scanpy, thresholding, violin plots
+## ⚙️ Installation
 
-## 🔹 4. Normalization + Dimensionality Reduction
+Create the conda environment:
 
-Goal: Normalize, log-transform, run PCA + UMAP
+```bash
+conda env create -f environment.yml
+conda activate perturbseq
+```
 
-Tool: scanpy.pp functions
+## 🚀 How to Run
 
-## 🔹 5. Clustering and Marker Gene Analysis
+Execute the pipeline step-by-step using the Python scripts under the `scripts/` directory.
 
-Goal: Identify clusters and marker genes
+```bash
+python scripts/01_download_data.py             # Download and extract GSE149383
+python scripts/02_preprocessing.py             # Load, filter, and normalize data
+python scripts/03_qc.py                        # Perform quality control
+python scripts/04_dimred_clustering.py         # Dimensionality reduction + clustering
+python scripts/05_perturbation_effects.py      # Differential expression analysis
+python scripts/06_biological_analysis.py       # Pathway enrichment analysis
+```
 
-Tool: scanpy.tl.leiden, scanpy.tl.rank_genes_groups
+Each script reads from `data/` and saves outputs to `figures/` or back into `data/`.
 
-## 🔹 6. Guide-Level Perturbation Effects
+## 📂 Folder Structure
 
-Goal: Compare expression profiles of cells with different guides
+```
+perturbseq-pipeline/
+├── data/                  # Raw and processed datasets
+├── scripts/               # Python scripts for each pipeline step
+├── figures/               # Output visualizations
+├── environment.yml        # Conda environment definition
+├── README.md              # This file
+├── .gitignore             # Ignored files/folders
+```
 
-Tool: Differential expression analysis, volcano plots
+## 📘 License
 
-## 🔹 7. Biological Interpretation
-
-Goal: Infer pathways affected by perturbations (e.g., GSEA or GO)
-
-Tool: gseapy, scanpy.tl.dendrogram, violin plots
-
-## 🔹 8. Generate Summary Report & Push to GitHub
-
-Goal: Markdown README, summary figures, clean code repo
-
-Tool: matplotlib, seaborn, nbconvert, Git
-
-## 🧪 Example Repo Structure
-          perturbseq-pipeline/
-          ├── data/                        # Downloaded and processed data
-          ├── notebooks/                  # Jupyter notebooks for each step
-          │   ├── 01_download_data.ipynb
-          │   ├── 02_preprocessing.ipynb
-          │   ├── 03_qc.ipynb
-          │   ├── 04_dimred_clustering.ipynb
-          │   ├── 05_perturbation_effects.ipynb
-          │   └── 06_biological_analysis.ipynb
-          ├── scripts/                    # Optional .py scripts
-          ├── figures/                    # UMAPs, DE results, volcano plots
-          ├── README.md                   # Project summary
-          ├── environment.yml             # Conda environment
-          └── .gitignore
+MIT License – feel free to use, adapt, and share.
