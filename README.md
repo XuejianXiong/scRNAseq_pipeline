@@ -39,7 +39,8 @@ conda activate perturbseq
 Execute the pipeline step-by-step using the Python scripts under the `scripts/` directory.
 
 ```bash
-python scripts/01_download_data.py             # Download and extract GSE149383
+python scripts/00_setup.sh                     # Setup directories
+python scripts/01_download_data.sh             # Download and extract GSE149383
 python scripts/02_preprocessing.py             # Load, filter, and normalize data
 python scripts/03_qc.py                        # Perform quality control
 python scripts/04_dimred_clustering.py         # Dimensionality reduction + clustering
@@ -47,7 +48,7 @@ python scripts/05_perturbation_effects.py      # Differential expression analysi
 python scripts/06_biological_analysis.py       # Pathway enrichment analysis
 ```
 
-Each script reads from `data/` and saves outputs to `figures/` or back into `data/`.
+Each script reads from `data/` and saves outputs to `figures/` or `results/`.
 
 ## 📂 Folder Structure
 
@@ -56,7 +57,8 @@ perturbseq-pipeline/
 ├── data/                  # Raw and processed datasets
 ├── scripts/               # Python scripts for each pipeline step
 ├── figures/               # Output visualizations
-├── environment.yml        # Conda environment definition
+├── results/               # Output data files
+├── requirements.txt       # Python packages
 ├── README.md              # This file
 ├── .gitignore             # Ignored files/folders
 ```
