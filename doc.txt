@@ -1,0 +1,36 @@
+## Step 4: Normalization, Highly Variable Genes, and Dimensionality Reduction
+
+In this step, we perform essential preprocessing and dimensionality reduction techniques to reveal the underlying biological structure of the single-cell transcriptomic data:
+
+### 1. Normalization and Log-Transformation
+
+Why? Raw counts differ widely between cells due to sequencing depth and capture efficiency. Normalization (e.g., total counts per cell scaled to a common value) ensures comparability between cells by removing such technical biases.
+
+Log-transformation helps stabilize variance and reduces skewness, making gene expression values more suitable for downstream analyses like PCA.
+
+### 2. Identification of Highly Variable Genes (HVGs)
+
+Biological meaning: HVGs are genes whose expression varies significantly across cells beyond technical noise. These genes often represent biological heterogeneity — e.g., genes marking different cell types, states, or responses.
+
+Why keep HVGs? Focusing on HVGs reduces noise and computational burden, improving the detection of meaningful biological patterns.
+
+### 3. Principal Component Analysis (PCA)
+
+PCA reduces dimensionality by summarizing the main axes of variation in the data.
+
+The first few principal components often capture key biological differences (e.g., cell types or conditions), enabling better visualization and clustering.
+
+### 4. Uniform Manifold Approximation and Projection (UMAP)
+
+UMAP projects the high-dimensional data into two dimensions while preserving both local and global structure.
+
+This allows visualization of cellular heterogeneity, identifying distinct clusters or trajectories reflecting biological processes.
+
+### Interpretation of the Results
+
+The HVG plot highlights genes driving biological variability. Genes marked as highly variable (colored in the plot) are strong candidates for further investigation, such as marker genes.
+
+The PCA plot shows how cells separate based on the principal axes of variation. Clear clustering suggests distinct cell populations or states.
+
+The UMAP plot provides an intuitive, visual map of the cellular landscape, often revealing subpopulations or gradients reflecting developmental or treatment effects.
+

@@ -1,0 +1,49 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VSCode settings
+.vscode/
+
+# MacOS system files
+.DS_Store
+
+# Logs and local outputs
+*.log
+*.out
+outputs/
+logs/
+
+# Temp and intermediate files
+tmp/
+temp/
+*.tmp
+*.bak
+cache/
+
+# Test and coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# pip log
+pip-log.txt
+
+# data/results folders
+data/
+figures/
+results/*.h5ad
+results/*_log.txt
+results/*.csv
+
