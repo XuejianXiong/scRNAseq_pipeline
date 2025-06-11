@@ -27,11 +27,13 @@ GEO Accession: [GSE149383](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GS
 
 ## ⚙️ Installation
 
-Create the conda environment:
+Create the python virtural environment and install required python packages:
 
 ```bash
-conda env create -f environment.yml
-conda activate perturbseq
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
 ## 🚀 How to Run
@@ -43,7 +45,7 @@ python scripts/00_setup.sh                     # Setup directories
 python scripts/01_download_data.sh             # Download and extract GSE149383
 python scripts/02_preprocessing.py             # Load, filter, and normalize data
 python scripts/03_qc.py                        # Perform quality control
-python scripts/04_dimred_clustering.py         # Dimensionality reduction + clustering
+python scripts/04_normalization_dimred.py      # Normalization + dimensionality reduction
 python scripts/05_perturbation_effects.py      # Differential expression analysis
 python scripts/06_biological_analysis.py       # Pathway enrichment analysis
 ```
