@@ -2,6 +2,9 @@ import scanpy as sc
 import pandas as pd
 import os
 
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 # -----------------------------
 # Step 2: Load and Merge Datasets with Metadata
 # -----------------------------
