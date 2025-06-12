@@ -63,6 +63,10 @@ python python_scripts/07_GSEA.py                      # Pathway enrichment (GO/K
 
 ### 🟣 R Pipeline
 
+```bash
+source("install_packages.R")
+```
+
 Run R scripts in RStudio or VS Code:
 
 ```bash
