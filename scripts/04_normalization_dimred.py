@@ -113,7 +113,7 @@ logging.info(f"Computed neighbors (n_neighbors={N_NEIGHBORS}, n_pcs={N_PCS}) and
 # -----------------------------
 # Save Processed Data
 # -----------------------------
-adata.write(f"{RESULTS_DIR}/04_norm_dr.h5ad")
+adata.write(f"{RESULTS_DIR}/04_norm_dr_data.h5ad")
 logging.info("Saved normalized and reduced AnnData object")
 
 # -----------------------------

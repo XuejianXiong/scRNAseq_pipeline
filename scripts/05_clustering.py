@@ -34,7 +34,7 @@ logging.info(f"Parameters - LEIDEN_RESOLUTION: {LEIDEN_RESOLUTION}, N_NEIGHBORS:
              f"N_PCS: {N_PCS}, RANK_GENES_METHOD: {RANK_GENES_METHOD}, TOP_N_GENES: {TOP_N_GENES}")
 
 # Load normalized and reduced data from Step 4
-adata = sc.read("results/04_norm_dr.h5ad")
+adata = sc.read("results/04_norm_dr_data.h5ad")
 #print(adata.raw)  # Should not be None
 #print(adata.raw.X[:5, :5])  # Check some values (should look log-transformed)
 #print(adata.X[:5, :5])      # Check current data matrix values for comparison
