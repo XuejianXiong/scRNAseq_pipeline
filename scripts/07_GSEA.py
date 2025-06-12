@@ -4,6 +4,8 @@ import numpy as np
 import os
 import datetime
 import gseapy as gp
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -33,6 +35,72 @@ def log(msg):
     print(full_msg)
     with open(log_file, "a") as f:
         f.write(full_msg + "\n")
+
+# -----------------------------
+# Plotting functions
+# -----------------------------
+def plot_leading_edge_heatmap(adata, lead_genes_str, groupby, outdir, grp):
+    lead_genes = lead_genes_str.split(';')
+    genes_in_data = [g for g in lead_genes if g in adata.var_names]
+    if not genes_in_data:
+        log(f"No leading edge genes found in adata for group {grp}")
+        return
+    expr = adata[:, genes_in_data].X
+    if hasattr(expr, "toarray"):
+        expr = expr.toarray()
+    df_expr = pd.DataFrame(expr, columns=genes_in_data, index=adata.obs_names)
+    df_expr['group'] = adata.obs[groupby]
+    df_expr = df_expr.sort_values('group')
+    df_expr_numeric = df_expr.drop(columns='group')
+
+    plt.figure(figsize=(10, 6))
+    sns.heatmap(df_expr_numeric.T, cmap='vlag', center=0, xticklabels=False)
+    plt.title(f"Leading Edge Genes Heatmap: {groupby} = {grp}")
+    plt.ylabel("Genes")
+    plt.xlabel("Cells (sorted by group)")
+    plt.tight_layout()
+    outfile = os.path.join(outdir, f"heatmap_leading_edge_{groupby}_{grp}.png")
+    plt.savefig(outfile, dpi=150)
+    plt.close()
+    log(f"Heatmap saved to {outfile}")
+
+def plot_dotplot_top_pathways(df_gsea, outdir, groupby_col, grp):
+    df_top = df_gsea.sort_values('FDR q-val').head(10).copy()
+    # Convert 'Gene %' like '12/100' to numeric size
+    sizes = df_top['Gene %'].str.split('/').apply(lambda x: int(x[0])/int(x[1]) if len(x)==2 else 0)
+    sizes = sizes * 1000  # scale for visibility
+
+    plt.figure(figsize=(8, 5))
+    scatter = plt.scatter(
+        x=df_top['NES'], y=df_top['Term'],
+        s=sizes,
+        c=-np.log10(df_top['FDR q-val']+1e-10), cmap='viridis', edgecolor='black'
+    )
+    plt.colorbar(scatter, label='-log10(FDR q-val)')
+    plt.xlabel('Normalized Enrichment Score (NES)')
+    plt.title(f"Top 10 Enriched Pathways Dot Plot\n{groupby_col} = {grp}")
+    plt.grid(True, axis='x')
+    plt.tight_layout()
+
+    outfile = os.path.join(outdir, f"dotplot_top_pathways_{groupby_col}_{grp}.png")
+    plt.savefig(outfile, dpi=150)
+    plt.close()
+    log(f"Dot plot saved to {outfile}")
+
+def plot_barplot_nes(df_gsea, outdir, groupby_col, grp):
+    df_top = df_gsea.sort_values('FDR q-val').head(10).copy()
+    df_top = df_top[::-1]  # reverse for horizontal bar plot
+
+    plt.figure(figsize=(8, 5))
+    sns.barplot(x='NES', y='Term', data=df_top, palette='coolwarm')
+    plt.xlabel('Normalized Enrichment Score (NES)')
+    plt.title(f"Top 10 Enriched Pathways Bar Plot\n{groupby_col} = {grp}")
+    plt.tight_layout()
+
+    outfile = os.path.join(outdir, f"barplot_nes_{groupby_col}_{grp}.png")
+    plt.savefig(outfile, dpi=150)
+    plt.close()
+    log(f"Bar plot saved to {outfile}")
 
 # -----------------------------
 # Load AnnData
@@ -74,6 +142,7 @@ for groupby_col in groupings:
         ranked_gene_list = df.set_index('names')['logfoldchanges'].sort_values(ascending=False)
 
         outdir = os.path.join(gsea_dir, f"{groupby_col}_{grp}")
+        os.makedirs(outdir, exist_ok=True)
         try:
             gsea_res = gp.prerank(
                 rnk=ranked_gene_list,
@@ -93,8 +162,6 @@ for groupby_col in groupings:
             else:
                 log(f"    Found {len(gsea_res.res2d)} enrichment results for {groupby_col}={grp}")
 
-            print(gsea_res.res2d.columns)
-
             if not gsea_res.res2d.empty:
                 top_terms = gsea_res.res2d.sort_values('FDR q-val').head(3)['Term'].tolist()
                 for term in top_terms:
@@ -103,15 +170,28 @@ for groupby_col in groupings:
                         log(f"    ✅ Manually generated plot for {term}")
                     except Exception as e:
                         log(f"    ❌ Failed to plot {term}: {e}")
-    
 
         except Exception as e:
             log(f"    ❌ GSEA failed for {groupby_col}={grp}: {e}")
             continue
 
-        # Read enrichment results CSV for the report
+        # Read enrichment results CSV for the report and extra plots
         res_csv = os.path.join(outdir, "gseapy.gene_set.prerank.report.csv")
         if os.path.exists(res_csv):
+            df_enrich = pd.read_csv(res_csv).sort_values('FDR q-val')
+            if not df_enrich.empty:
+                # Call new plots
+                lead_genes_str = df_enrich.iloc[0]['Lead_genes'] if 'Lead_genes' in df_enrich.columns else None
+                if lead_genes_str and isinstance(lead_genes_str, str) and lead_genes_str != "":
+                    plot_leading_edge_heatmap(adata, lead_genes_str, groupby_col, outdir, grp)
+                else:
+                    log(f"    ⚠️ No leading edge genes info for {groupby_col}={grp}")
+
+                plot_dotplot_top_pathways(df_enrich, outdir, groupby_col, grp)
+                plot_barplot_nes(df_enrich, outdir, groupby_col, grp)
+            else:
+                log(f"    ⚠️ Empty enrichment DataFrame for {groupby_col}={grp}")
+
             report_data[groupby_col][grp] = {
                 "csv": res_csv,
                 "outdir": outdir
@@ -135,48 +215,31 @@ th {{ background-color: #f2f2f2; }}
 tr:nth-child(even) {{ background-color: #f9f9f9; }}
 a {{ color: #2980B9; text-decoration: none; }}
 a:hover {{ text-decoration: underline; }}
-.img-container {{ margin-bottom: 30px; }}
 </style>
 </head><body>
-<h1>Gene Set Enrichment Analysis (GSEA) Report</h1>
-<p><b>Date:</b> {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+<h1>GSEA Enrichment Report</h1>
+<p>Generated: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
 """)
 
-    for groupby_col, groups_dict in report_data.items():
-        f.write(f"<h2>GSEA Results by {groupby_col.capitalize()}</h2>\n")
-        for grp, paths in groups_dict.items():
-            csv_rel = os.path.relpath(paths["csv"], start=os.path.dirname(html_report))
-            outdir_rel = os.path.relpath(paths["outdir"], start=os.path.dirname(html_report))
-
-            # Load top 10 enriched gene sets for preview
-            df_enrich = pd.read_csv(paths["csv"]).sort_values('FDR q-val').head(10)
-            html_table = df_enrich.to_html(index=False, classes="table table-striped", border=0)
-
-            # Try to find a representative enrichment plot image
-            # The typical gseapy plot files are named like "gseapy.prerank.<geneset_name>.png"
-            import glob
-            img_files = glob.glob(os.path.join(paths["outdir"], "gseapy.prerank.*.png"))
-            # Pick top 3 plots to display (if any)
-            top_imgs = img_files[:3]
-
-            f.write(f"""
-            <h3>{groupby_col.capitalize()} = {grp}</h3>
-            <p>Top 10 enriched gene sets (FDR q-value sorted):</p>
-            {html_table}
-            <p>Full CSV: <a href="{csv_rel}">{csv_rel}</a></p>
-            """)
-
-            if top_imgs:
-                f.write("<div class='img-container'><p>Representative enrichment plots:</p>")
-                for img_path in top_imgs:
-                    img_rel = os.path.relpath(img_path, start=os.path.dirname(html_report))
-                    f.write(f'<img src="{img_rel}" alt="Enrichment plot" width="400" style="margin-right:20px;">')
-                f.write("</div>")
-            else:
-                f.write("<p><i>No enrichment plots found.</i></p>")
+    for groupby_col, grp_data in report_data.items():
+        f.write(f"<h2>Grouping: {groupby_col}</h2>")
+        for grp, info in grp_data.items():
+            f.write(f"<h3>Group: {grp}</h3>")
+            csv_path = info['csv']
+            outdir = info['outdir']
+            # Show enrichment table preview
+            df_preview = pd.read_csv(csv_path).head(10)
+            f.write(df_preview.to_html(index=False))
+            # Embed plots
+            for plotname in ["heatmap_leading_edge", "dotplot_top_pathways", "barplot_nes"]:
+                img_path = os.path.join(outdir, f"{plotname}_{groupby_col}_{grp}.png")
+                
+                # make img_path relative to the HTML file location
+                rel_img_path = os.path.relpath(img_path, start=output_dir)
+                if os.path.exists(img_path):
+                    f.write(f'<h4>{plotname.replace("_", " ").title()}</h4>')
+                    f.write(f'<img src="{rel_img_path}" style="max-width:800px; max-height:600px;"><br><br>')
 
     f.write("</body></html>")
 
-log(f"Generated HTML report at {html_report}")
-
-print("✅ Step 7 complete: GSEA enrichment analysis + visualization + report done and saved.")
+log(f"HTML report saved to {html_report}")
