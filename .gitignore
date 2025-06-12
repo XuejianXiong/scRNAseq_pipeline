@@ -46,4 +46,5 @@ figures/
 results/*.h5ad
 results/*_log.txt
 results/*.csv
+results/markers
 
