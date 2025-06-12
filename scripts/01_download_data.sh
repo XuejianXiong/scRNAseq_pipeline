@@ -1,9 +1,13 @@
+# -----------------------------
+# Step 1: Download data from GEO
+# -----------------------------
+
 cd data/GSE149383/raw
 
 # Download raw tar archive (alternatively use wget or curl)
-#wget ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE149nnn/GSE149383/suppl/GSE149383_RAW.tar
+wget ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE149nnn/GSE149383/suppl/GSE149383_RAW.tar
 
-#tar -xvf GSE149383_RAW.tar -C ../extracted
+tar -xvf GSE149383_RAW.tar -C ../extracted
 
 cd ../extracted
 
