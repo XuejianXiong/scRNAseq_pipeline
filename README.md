@@ -1,4 +1,4 @@
-# 🔬 Perturb-seq Analysis Pipeline
+# 🔬 Single-cell RNA-seq Analysis Pipeline
 
 This project analyzes public CROP-seq data from A549 cells (GSE149383) to study transcriptional effects of CRISPR-based gene perturbations using a reproducible single-cell RNA-seq pipeline built in Python.
 
