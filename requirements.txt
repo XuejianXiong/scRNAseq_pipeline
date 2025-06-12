@@ -8,3 +8,5 @@ pandas==2.2.3
 anndata==0.11.4
 gseapy==1.1.9
 numpy==1.26.4    # the latest NumPy version that retains np.float_ and other APIs removed in 2.0.
+python-igraph==0.11.9
+leidenalg==0.10.2
