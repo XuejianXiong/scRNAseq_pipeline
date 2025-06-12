@@ -63,7 +63,7 @@ python python_scripts/07_GSEA.py                      # Pathway enrichment (GO/K
 
 ### 🟣 R Pipeline
 
-Open R/sc_pipeline.Rproj or run scripts manually in RStudio or VS Code:
+Run R scripts in RStudio or VS Code:
 
 ```bash
 source("R_scripts/00_setup.R")                  # Set up directories
