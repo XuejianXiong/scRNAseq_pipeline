@@ -41,10 +41,12 @@ htmlcov/
 pip-log.txt
 
 # data/results folders
-#data/
-#figures/
+data/
+figures/
 results/*.h5ad
 results/*_log.txt
 results/*.csv
 results/markers
+results/DE_csv
+results/gsea
 

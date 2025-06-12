@@ -32,7 +32,7 @@ Tool: scanpy.tl.leiden, scanpy.tl.rank_genes_groups
 
 ## 🔹 6. Guide-Level Perturbation Effects
 
-Goal: Compare expression profiles of cells with different guides
+Goal: Compare expression profiles of cells with different treatments and clusters
 
 Tool: Differential expression analysis, volcano plots
 
