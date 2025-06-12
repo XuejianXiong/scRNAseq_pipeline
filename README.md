@@ -51,14 +51,14 @@ pip install -r requirements.txt
 Then run each step:
 
 ```bash
-python scripts/00_setup.sh                     # Setup directories
-python scripts/01_download_data.sh             # Download and extract GSE149383
-python scripts/02_preprocessing.py             # Load, filter, and merge datasets
-python scripts/03_qc.py                        # Perform quality control
-python scripts/04_normalization_dimred.py      # Normalize and run PCA/UMAP
-python scripts/05_clustering.py                # Clustering (Leiden)
-python scripts/06_DE.py                        # Differential expression
-python scripts/07_GSEA.py                      # Pathway enrichment (GO/KEGG)
+python python_scripts/00_setup.sh                     # Setup directories
+python python_scripts/01_download_data.sh             # Download and extract GSE149383
+python python_scripts/02_preprocessing.py             # Load, filter, and merge datasets
+python python_scripts/03_qc.py                        # Perform quality control
+python python_scripts/04_normalization_dimred.py      # Normalize and run PCA/UMAP
+python python_scripts/05_clustering.py                # Clustering (Leiden)
+python python_scripts/06_DE.py                        # Differential expression
+python python_scripts/07_GSEA.py                      # Pathway enrichment (GO/KEGG)
 ```
 
 ### 🟣 R Pipeline
@@ -66,13 +66,14 @@ python scripts/07_GSEA.py                      # Pathway enrichment (GO/KEGG)
 Open R/sc_pipeline.Rproj or run scripts manually in RStudio or VS Code:
 
 ```bash
-source("R/00_setup.R")               # Set up directories
-source("R/01_load_data.R")           # Load 10x data from nested folders
-source("R/02_preprocessing.R")       # Merge datasets with metadata
-source("R/03_qc.R")                  # Quality control and filtering
-source("R/04_dimred_clustering.R")   # PCA, UMAP, clustering
-source("R/05_DE_analysis.R")         # DE analysis using Seurat
-source("R/06_GSEA.R")                # Enrichment analysis using fgsea
+source("R_scripts/00_setup.R")                  # Set up directories
+source("R_scripts/01_download_data.R")          # Download and extract GSE149383
+source("R_scripts/02_preprocessing.R")          # Merge datasets with metadata
+source("R_scripts/03_qc.R")                     # Perform quality control
+source("R_scripts/04_normalization_dimred.R")   # Normalize and run PCA/UMAP
+source("R_scripts/05_clustering.R")             # Clustering
+source("R_scripts/06_DE.R")                     # DE analysis using Seurat
+source("R_scripts/07_GSEA.R")                   # Enrichment analysis using fgsea
 ```
 
 ---
@@ -89,7 +90,7 @@ scRNAseq_pipeline/
 ├── figures/               # Output visualizations
 ├── results/               # Output data files
 └── data/
-    └── GSE149383/         # Raw and processed datasets
+|   └── GSE149383/         # Raw and processed datasets
 ├── python_scripts/        # Python scripts for each pipeline step
 ├── R_scripts/             # R scripts for each pipeline step
 
