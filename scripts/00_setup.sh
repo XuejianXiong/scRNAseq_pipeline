@@ -4,11 +4,12 @@
 
 # setup required folders to store downloaded data, ouput files and figures
 
-mkdir -p data
-mkdir -p data/GSE149383
-mkdir -p data/GSE149383/raw
-mkdir -p data/GSE149383/extracted
+[ ! -d "data" ] && mkdir -p data
 
-mkdir -p results
+[ ! -d "data/GSE149383" ] && mkdir -p data/GSE149383
+[ ! -d "data/GSE149383/raw" ] && mkdir -p data/GSE149383/raw
+[ ! -d "data/GSE149383/extracted" ] && mkdir -p data/GSE149383/extracted
 
-mkdir -p figures
+[ ! -d "results" ] && mkdir -p results
+
+[ ! -d "figures" ] && mkdir -p figures
