@@ -57,7 +57,7 @@ Each script reads from `data/` and saves outputs to `results/` and `figures/`.
 ## 📂 Folder Structure
 
 ```
-perturbseq-pipeline/
+scRNAseq_pipeline/
 ├── data/                  # Raw and processed datasets
 ├── scripts/               # Python scripts for each pipeline step
 ├── figures/               # Output visualizations
