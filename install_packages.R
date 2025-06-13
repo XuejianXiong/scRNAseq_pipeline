@@ -12,7 +12,12 @@ cran_packages <- c(
   "ggplot2",
   "readr",
   "dplyr",
-  "cowplot"
+  "cowplot",
+  "sp",
+  "shiny",
+  "plotly",
+  "reticulate",
+  "stringi"
 )
 
 bioc_packages <- c(
