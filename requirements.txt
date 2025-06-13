@@ -1,7 +1,6 @@
 # Core
 
-#scanpy==1.9.6
-scanpy==1.11.2      # the latest scanpy version
+scanpy==1.11.2 
 matplotlib==3.10.3
 seaborn==0.13.2
 pandas==2.2.3
