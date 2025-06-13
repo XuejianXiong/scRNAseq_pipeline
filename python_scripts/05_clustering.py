@@ -3,6 +3,9 @@ import pandas as pd
 import logging
 from pathlib import Path
 import os
+import warnings
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # -----------------------------
 # Step 5: Clustering and Marker Gene Analysis

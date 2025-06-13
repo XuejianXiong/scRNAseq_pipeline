@@ -6,6 +6,9 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import warnings
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # -----------------------------
 # Step 4: Normalization and Dimensionality Reduction
@@ -131,4 +134,5 @@ with open(report_path, "w") as f:
     f.write("</body></html>")
 
 logging.info(f"Generated HTML report at {report_path}")
+
 print("✅ Step 4 complete: Normalization, HVG selection, PCA & UMAP done and saved.")
