@@ -51,8 +51,8 @@ pip install -r requirements.txt
 Then run each step:
 
 ```bash
-python python_scripts/00_setup.sh                     # Setup directories
-python python_scripts/01_download_data.sh             # Download and extract GSE149383
+./python_scripts/00_setup.sh                     # Setup directories
+./python_scripts/01_download_data.sh             # Download and extract GSE149383
 python python_scripts/02_preprocessing.py             # Load, filter, and merge datasets
 python python_scripts/03_qc.py                        # Perform quality control
 python python_scripts/04_normalization_dimred.py      # Normalize and run PCA/UMAP
@@ -70,14 +70,14 @@ source("install_packages.R")
 Run R scripts in RStudio or VS Code:
 
 ```bash
-source("R_scripts/00_setup.R")                  # Set up directories
-source("R_scripts/01_download_data.R")          # Download and extract GSE149383
-source("R_scripts/02_preprocessing.R")          # Merge datasets with metadata
-source("R_scripts/03_qc.R")                     # Perform quality control
-source("R_scripts/04_normalization_dimred.R")   # Normalize and run PCA/UMAP
-source("R_scripts/05_clustering.R")             # Clustering
-source("R_scripts/06_DE.R")                     # DE analysis using Seurat
-source("R_scripts/07_GSEA.R")                   # Enrichment analysis using fgsea
+./R_scripts/00_setup.sh                           # Set up directories
+./R_scripts/01_download_data.sh                   # Download and extract GSE149383
+source("R_scripts/02_preprocessing.R")            # Merge datasets with metadata
+source("R_scripts/03_qc.R")                       # Perform quality control
+source("R_scripts/04_normalization_dimred.R")     # Normalize and run PCA/UMAP
+source("R_scripts/05_clustering.R")               # Clustering
+source("R_scripts/06_DE.R")                       # DE analysis using Seurat
+source("R_scripts/07_GSEA.R")                     # Enrichment analysis using fgsea
 ```
 
 ---
