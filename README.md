@@ -20,14 +20,14 @@ Replogle et al. (2020). *Direct capture of CRISPR guides enables scalable, multi
 ## 🧰 Tech Stack
 
 ### Python version
-- Python 3.10
+- Python 3.13.3
 - [Scanpy](https://scanpy.readthedocs.io/)
 - [gseapy](https://gseapy.readthedocs.io/)
 - pandas, seaborn, matplotlib, numpy, anndata
 - python-igraph, leidenalg
 
 ### R version
-- R (≥ 4.2.0)
+- R 4.5.0
 - [Seurat](https://satijalab.org/seurat/)
 - dplyr, ggplot2, patchwork
 - fgsea, clusterProfiler, org.Hs.eg.db
