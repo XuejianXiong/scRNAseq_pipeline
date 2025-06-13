@@ -53,12 +53,12 @@ Then run each step:
 ```bash
 ./python_scripts/00_setup.sh                     # Setup directories
 ./python_scripts/01_download_data.sh             # Download and extract GSE149383
-python python_scripts/02_preprocessing.py             # Load, filter, and merge datasets
-python python_scripts/03_qc.py                        # Perform quality control
-python python_scripts/04_normalization_dimred.py      # Normalize and run PCA/UMAP
-python python_scripts/05_clustering.py                # Clustering (Leiden)
-python python_scripts/06_DE.py                        # Differential expression
-python python_scripts/07_GSEA.py                      # Pathway enrichment (GO/KEGG)
+python python_scripts/02_preprocessing.py        # Load, filter, and merge datasets
+python python_scripts/03_qc.py                   # Perform quality control
+python python_scripts/04_normalization_dimred.py # Normalize and run PCA/UMAP
+python python_scripts/05_clustering.py           # Clustering (Leiden)
+python python_scripts/06_DE.py                   # Differential expression
+python python_scripts/07_GSEA.py                 # Pathway enrichment (GO/KEGG)
 ```
 
 ### 🟣 R Pipeline
