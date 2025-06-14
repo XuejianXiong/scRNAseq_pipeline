@@ -2,6 +2,12 @@
 # Step 3: Quality Control
 # -----------------------------
 
+# Clear environment, graphics, and console
+rm(list = ls())            # Remove all variables from the workspace
+graphics.off()             # Close all open graphics devices
+cat("\014")                # Clear the console (works in RStudio)
+
+
 library(Seurat)
 library(ggplot2)
 library(dplyr)
@@ -10,11 +16,15 @@ library(dplyr)
 # Parameters and Paths
 # -----------------------------
 
-input_file <- "results/02_merged_data.rds"
-output_file <- "results/03_filtered_data.rds"
-qc_plot_dir <- "figures"
-report_file <- "results/03_report_R.html"
-log_file <- "results/03_log.txt"
+output_dir <- "results"
+plot_dir <- "figures"
+input_file <- file.path(output_dir, "02_merged_data.rds")
+output_file <- file.path(output_dir, "03_filtered_data.rds")
+report_file <- file.path(output_dir, "03_report.html")
+log_file <- file.path(output_dir, "03_log.txt")
+
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+if (!dir.exists(plot_dir)) dir.create(plot_dir, recursive = TRUE)
 
 qc_params <- list(
   min_genes = 200,
@@ -22,7 +32,6 @@ qc_params <- list(
   min_cells_per_gene = 3
 )
 
-if (!dir.exists(qc_plot_dir)) dir.create(qc_plot_dir, recursive = TRUE)
 
 # -----------------------------
 # Logging Utility
@@ -53,9 +62,9 @@ seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
 # -----------------------------
 
 save_qc_plots <- function(seurat_obj, group_label, suffix) {
-  vln_file <- file.path(qc_plot_dir, sprintf("qc_violin_by_%s_%s.png", group_label, suffix))
-  scatter_mt_file <- file.path(qc_plot_dir, sprintf("qc_scatter_mt_by_%s_%s.png", group_label, suffix))
-  scatter_gene_file <- file.path(qc_plot_dir, sprintf("qc_scatter_genes_by_%s_%s.png", group_label, suffix))
+  vln_file <- file.path(plot_dir, sprintf("qc_violin_by_%s_%s.png", group_label, suffix))
+  scatter_mt_file <- file.path(plot_dir, sprintf("qc_scatter_mt_by_%s_%s.png", group_label, suffix))
+  scatter_gene_file <- file.path(plot_dir, sprintf("qc_scatter_genes_by_%s_%s.png", group_label, suffix))
   
   g1 <- VlnPlot(seurat_obj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
                 group.by = group_label, pt.size = 0.1, ncol = 3)
@@ -136,22 +145,23 @@ html <- c(
 
 for (group in group_cols) {
   html <- c(html,
-            sprintf('<img src="../%s/qc_violin_by_%s_before.png" width="600"/><br>', qc_plot_dir, group),
-            sprintf('<img src="../%s/qc_scatter_mt_by_%s_before.png" width="600"/><br>', qc_plot_dir, group),
-            sprintf('<img src="../%s/qc_scatter_genes_by_%s_before.png" width="600"/><br>', qc_plot_dir, group))
+            sprintf('<img src="../%s/qc_violin_by_%s_before.png" width="600"/><br>', plot_dir, group),
+            sprintf('<img src="../%s/qc_scatter_mt_by_%s_before.png" width="600"/><br>', plot_dir, group),
+            sprintf('<img src="../%s/qc_scatter_genes_by_%s_before.png" width="600"/><br>', plot_dir, group))
 }
 
 html <- c(html, "<h2>QC Metrics After Filtering</h2>")
 
 for (group in group_cols) {
   html <- c(html,
-            sprintf('<img src="../%s/qc_violin_by_%s_after.png" width="600"/><br>', qc_plot_dir, group),
-            sprintf('<img src="../%s/qc_scatter_mt_by_%s_after.png" width="600"/><br>', qc_plot_dir, group),
-            sprintf('<img src="../%s/qc_scatter_genes_by_%s_after.png" width="600"/><br>', qc_plot_dir, group))
+            sprintf('<img src="../%s/qc_violin_by_%s_after.png" width="600"/><br>', plot_dir, group),
+            sprintf('<img src="../%s/qc_scatter_mt_by_%s_after.png" width="600"/><br>', plot_dir, group),
+            sprintf('<img src="../%s/qc_scatter_genes_by_%s_after.png" width="600"/><br>', plot_dir, group))
 }
 
 html <- c(html, "</body></html>")
 writeLines(html, report_file)
 log_msg(sprintf("HTML QC report generated at: %s", report_file))
+
 
 cat("✅ Step 3 complete: Quality control applied, filtered data saved.\n")

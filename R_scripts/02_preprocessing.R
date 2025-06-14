@@ -2,6 +2,11 @@
 # Step 2: Load and Merge Datasets with Metadata
 # -----------------------------
 
+# Clear environment, graphics, and console
+rm(list = ls())            # Remove all variables from the workspace
+graphics.off()             # Close all open graphics devices
+cat("\014")                # Clear the console (works in RStudio)
+
 library(Seurat)
 library(Matrix)
 library(dplyr)
@@ -12,10 +17,12 @@ library(SeuratObject)
 # -----------------------------
 
 data_dir <- "data/GSE149383"
-output_rds <- "results/02_merged_data.rds"
-output_meta <- "results/02_merged_metadata_R.csv"
+output_dir <- "results"
+output_rds <- file.path(output_dir, "02_merged_data.rds")
+output_meta <- file.path(output_dir, "02_merged_metadata_R.csv")
 
-if (!dir.exists("results")) dir.create("results")
+if (!dir.exists(data_dir)) dir.create(plot_dir, recursive = TRUE)
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
 
 sample_metadata <- list(
   "GSM3972651_PC9D0" = list(
@@ -104,5 +111,6 @@ cat(sprintf("✅ Combined counts into single 'counts' layer: %d cells × %d gene
 
 saveRDS(seurat_merged, file = output_rds)
 write.csv(seurat_merged@meta.data, file = output_meta, row.names = TRUE)
+
 
 cat("✅ Step 2 complete: Datasets loaded, merged, combined counts, and metadata saved.\n")
