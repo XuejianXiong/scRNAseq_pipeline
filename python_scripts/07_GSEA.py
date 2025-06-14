@@ -1,3 +1,7 @@
+# -----------------------------
+# Step 7: GSEA + Visualization + HTML Report
+# -----------------------------
+
 import scanpy as sc
 import pandas as pd
 import numpy as np
@@ -10,21 +14,19 @@ import logging
 from pathlib import Path
 import warnings
 
-warnings.simplefilter(action='ignore', category=FutureWarning)
+from pipeline_utils import setup_dirs_logs
 
-# -----------------------------
-# Step 7: GSEA + Visualization + HTML Report
-# -----------------------------
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # -----------------------------
 # User-Adjustable Parameters
 # -----------------------------
-RESULTS_DIR = "results"
-GSEA_DIR = f"{RESULTS_DIR}/GSEA"
-FIGURE_DIR = "figures"
-HTML_REPORT = f"{RESULTS_DIR}/07_report.html"
-LOG_FILE = f"{RESULTS_DIR}/07_log.txt"
-INPUT_FILE = f"{RESULTS_DIR}/06_de_data.h5ad"
+RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("07_log.txt")
+GSEA_DIR = Path(f"{RESULTS_DIR}/GSEA")
+GSEA_DIR.mkdir(parents=True, exist_ok=True)
+
+INPUT_FILE = RESULTS_DIR / "06_de_data.h5ad"
+HTML_REPORT = RESULTS_DIR / "07_report.html"
 
 GENE_SET_LIBRARY = "KEGG_2016"
 MIN_GENESET_SIZE = 15
@@ -34,10 +36,7 @@ SEED = 42
 GROUPINGS = ['treatment', 'leiden']
 # -----------------------------
 
-# Setup directories and logging
-Path(GSEA_DIR).mkdir(parents=True, exist_ok=True)
-Path(FIGURE_DIR).mkdir(parents=True, exist_ok=True)
-logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format="%(asctime)s %(message)s")
+
 logging.info("Step 7 started: GSEA and Visualization")
 
 # -----------------------------
@@ -194,8 +193,8 @@ with open(HTML_REPORT, "w") as f:
                     f.write(f'<img src="{rel_img_path}" width="700"><br><br>\n')
 
     f.write("</body></html>")
-
 logging.info(f"Generated HTML report at {HTML_REPORT}")
+
 
 print("✅ Step 7 complete: GSEA analysis and report generated.")
 

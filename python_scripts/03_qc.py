@@ -1,3 +1,7 @@
+# -----------------------------
+# Step 3: Quality Control
+# -----------------------------
+
 import scanpy as sc
 import pandas as pd
 import numpy as np
@@ -7,21 +11,17 @@ import os
 import datetime
 import warnings
 
-warnings.simplefilter(action='ignore', category=FutureWarning)
+from pipeline_utils import setup_dirs_logs
 
-# -----------------------------
-# Step 3: Quality Control
-# -----------------------------
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # -----------------------------
 # User-Adjustable Parameters
 # -----------------------------
-RESULTS_DIR = Path("results")
-FIGURE_DIR = Path("figures")
+RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("03_log.txt")
 INPUT_FILE = RESULTS_DIR / "02_merged_data.h5ad"
 OUTPUT_FILE = RESULTS_DIR / "03_filtered_data.h5ad"
 HTML_REPORT = RESULTS_DIR / "03_report.html"
-LOG_FILE = RESULTS_DIR / "03_log.txt"
 
 MIN_GENES = 200
 MAX_PCT_MT = 10
@@ -29,26 +29,24 @@ MIN_CELLS_PER_GENE = 3
 GROUP_COLS = ['treatment']
 # -----------------------------
 
-# Setup logging and directories
-RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-FIGURE_DIR.mkdir(parents=True, exist_ok=True)
-
-logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format="%(asctime)s %(message)s")
-sc.settings.autoshow = False
-sc.settings.figdir = str(FIGURE_DIR)
-sc.settings.verbosity = 2
 
 logging.info("Step 3 started: Quality Control")
 
-# Load merged dataset
+# -----------------------------
+# Load merged dataset from step 2
+# -----------------------------
 adata = sc.read(INPUT_FILE)
 logging.info(f"Loaded merged data: {adata.n_obs} cells × {adata.n_vars} genes")
 
+# -----------------------------
 # Annotate mitochondrial genes and calculate QC metrics
+# -----------------------------
 adata.var['mt'] = adata.var_names.str.upper().str.startswith('MT-')
 sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], inplace=True)
 
+# -----------------------------
 # Save QC plots before filtering
+# -----------------------------
 for group in GROUP_COLS:
     sc.pl.violin(
         adata,
@@ -81,7 +79,9 @@ for group in GROUP_COLS:
 
 pre_shape = adata.shape
 
+# -----------------------------
 # Apply filters
+# -----------------------------
 sc.pp.filter_cells(adata, min_genes=MIN_GENES)
 sc.pp.filter_genes(adata, min_cells=MIN_CELLS_PER_GENE)
 adata = adata[adata.obs['pct_counts_mt'] < MAX_PCT_MT, :]
@@ -90,7 +90,9 @@ post_shape = adata.shape
 logging.info(f"Filtering complete — Before: {pre_shape}, After: {post_shape}")
 logging.info(f"Applied thresholds — min_genes: {MIN_GENES}, min_cells_per_gene: {MIN_CELLS_PER_GENE}, max_pct_mito: {MAX_PCT_MT}%")
 
+# -----------------------------
 # Save QC plots after filtering
+# -----------------------------
 for group in GROUP_COLS:
     sc.pl.violin(
         adata,
@@ -121,11 +123,15 @@ for group in GROUP_COLS:
     )
     logging.info(f"Saved scatter plots colored by {group} after filtering")
 
+# -----------------------------
 # Save filtered data
+# -----------------------------
 adata.write(OUTPUT_FILE)
 logging.info(f"Filtered data saved to {OUTPUT_FILE}")
 
+# -----------------------------
 # Generate HTML report with embedded images
+# -----------------------------
 with open(HTML_REPORT, "w") as f:
     f.write(f"""<html><head><title>QC Report</title></head><body>
 <h1>Single-Cell QC Report</h1>
@@ -162,7 +168,7 @@ with open(HTML_REPORT, "w") as f:
         f.write(f'<img src="../{FIGURE_DIR}/scatter_qc_scatter_genes_by_{group}_after.png" width="600"/><br>\n')
 
     f.write("</body></html>\n")
-
 logging.info(f"HTML QC report generated at: {HTML_REPORT}")
+
 
 print("✅ Step 3 complete: Quality control applied, filtered data saved.")
