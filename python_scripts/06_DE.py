@@ -18,38 +18,9 @@ from pipeline_utils import setup_dirs_logs
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # -----------------------------
-# User-adjustable parameters
+# Volcano Plot Function
 # -----------------------------
-RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("06_log.txt")
-CSV_DIR = Path(f"{RESULTS_DIR}/DE_csv")
-CSV_DIR.mkdir(parents=True, exist_ok=True)
-
-INPUT_FILE = RESULTS_DIR / "05_clustered_data.h5ad"
-OUTPUT_FILE = RESULTS_DIR / "06_de_data.h5ad"
-HTML_REPORT = RESULTS_DIR / "06_report.html"
-
-FIG_NAME1 = "06_DE"
-FIG_NAME2 = "06_volcano"
-
-CUTOFF_PVALS = 0.05
-CUTOFF_DF = 1
-RANK_GENES_METHOD = "wilcoxon"  # Marker gene ranking method
-GROUPINGS = ['treatment', 'leiden']  # Grouping columns for DE
-# -----------------------------
-
-
-logging.info("Step 6 started: Differential Expression Analysis")
-
-# -----------------------------
-# Load data
-# -----------------------------
-adata = sc.read(INPUT_FILE)
-logging.info(f"Loaded clustered data: {adata.n_obs} cells × {adata.n_vars} genes")
-
-# -----------------------------
-# Differential Expression
-# -----------------------------
-def plot_volcano(df, title, save_path):
+def plot_volcano(df: pd.DataFrame, title: str, save_path: Path) -> None:
     df['pvals_adj'] = df['pvals_adj'].fillna(1)
     df['log10_padj'] = -np.log10(df['pvals_adj'].replace(0, 1e-300))
     df['significant'] = (df['pvals_adj'] < CUTOFF_PVALS) & (df['logfoldchanges'].abs() > CUTOFF_DF)
@@ -74,6 +45,38 @@ def plot_volcano(df, title, save_path):
     plt.savefig(save_path, dpi=150)
     plt.close()
 
+
+# -----------------------------
+# User-adjustable parameters
+# -----------------------------
+RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("06_log.txt")
+CSV_DIR = Path(f"{RESULTS_DIR}/DE_csv")
+CSV_DIR.mkdir(parents=True, exist_ok=True)
+
+INPUT_FILE = RESULTS_DIR / "05_clustered_data.h5ad"
+OUTPUT_FILE = RESULTS_DIR / "06_de_data.h5ad"
+HTML_REPORT = RESULTS_DIR / "06_report.html"
+
+FIG_NAME1 = "06_DE"
+FIG_NAME2 = "06_volcano"
+
+CUTOFF_PVALS = 0.05
+CUTOFF_DF = 1
+RANK_GENES_METHOD = "wilcoxon"  # Marker gene ranking method
+GROUPINGS = ['treatment', 'leiden']  # Grouping columns for DE
+# -----------------------------
+
+
+logging.info("Step 6 started: Differential Expression Analysis")
+# -----------------------------
+# Load data
+# -----------------------------
+adata = sc.read(INPUT_FILE)
+logging.info(f"Loaded clustered data: {adata.n_obs} cells × {adata.n_vars} genes")
+
+# -----------------------------
+# Differential Expression
+# -----------------------------
 for groupby_col in GROUPINGS:
     logging.info(f"Running DE analysis grouped by '{groupby_col}'")
     key_added = f"rank_genes_{groupby_col}"
@@ -112,9 +115,9 @@ with open(HTML_REPORT, "w") as f:
     for groupby_col in GROUPINGS:
         f.write(f"<h2>DE Results by {groupby_col.capitalize()}</h2>\n")
         for grp in sorted(adata.obs[groupby_col].unique()):
-            csv_name = f"DE_csv/06_DE_{groupby_col}_{grp}.csv"
-            fig_name = f"../figures/06_volcano_{groupby_col}_{grp}.png"
-            df_preview = pd.read_csv(CSV_DIR / f"06_DE_{groupby_col}_{grp}.csv").head(10)
+            csv_name = f"DE_csv/{FIG_NAME1}_{groupby_col}_{grp}.csv"
+            fig_name = f"../figures/{FIG_NAME2}_{groupby_col}_{grp}.png"
+            df_preview = pd.read_csv(CSV_DIR / f"{FIG_NAME1}_{groupby_col}_{grp}.csv").head(10)
             f.write(f"<h3>{groupby_col.capitalize()}: {grp}</h3>\n")
             f.write(f"<p>Top 10 DE genes:</p>\n")
             f.write(df_preview.to_html(index=False, classes="table table-striped", border=0))

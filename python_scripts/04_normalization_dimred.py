@@ -17,6 +17,29 @@ from pipeline_utils import setup_dirs_logs
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # -----------------------------
+# HVG Plot Function
+# -----------------------------
+def plot_highly_variable_genes(adata: sc.AnnData, save_path: Path) -> None:
+    if 'highly_variable' not in adata.var.columns:
+        raise ValueError("HVGs not computed.")
+    
+    means = adata.var['means']
+    dispersions = adata.var['dispersions']
+    hvg_mask = adata.var['highly_variable']
+
+    plt.figure(figsize=(6, 4))
+    plt.scatter(means[~hvg_mask], dispersions[~hvg_mask], c='lightgray', s=10, label='Not HVG', alpha=0.5)
+    plt.scatter(means[hvg_mask], dispersions[hvg_mask], c='red', s=10, label='HVG', alpha=0.8)
+    plt.xlabel('Mean expression')
+    plt.ylabel('Dispersion')
+    plt.title('Highly Variable Genes')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)
+    plt.close()
+
+
+# -----------------------------
 # User-Adjustable Parameters
 # -----------------------------
 RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("04_log.txt")
@@ -35,39 +58,14 @@ N_PCS = 40
 N_NEIGHBORS = 15
 PALETTE_NAME = "Set2"
 PALETTE_SIZE = 10
+
+# Define unified color palette
+treatment_palette = sns.color_palette(PALETTE_NAME, n_colors=PALETTE_SIZE)
+treatment_categories = None
 # -----------------------------
 
 
 logging.info("Step 4 started: Normalization and Dimensionality Reduction")
-
-# -----------------------------
-# Define unified color palette
-# -----------------------------
-treatment_palette = sns.color_palette(PALETTE_NAME, n_colors=PALETTE_SIZE)
-treatment_categories = None
-
-# -----------------------------
-# Helper Function: Custom HVG Plot
-# -----------------------------
-def plot_highly_variable_genes(adata, save_path):
-    if 'highly_variable' not in adata.var.columns:
-        raise ValueError("HVGs not computed. Run `sc.pp.highly_variable_genes` first.")
-    
-    means = adata.var['means']
-    dispersions = adata.var['dispersions']
-    hvg_mask = adata.var['highly_variable']
-
-    plt.figure(figsize=(6, 4))
-    plt.scatter(means[~hvg_mask], dispersions[~hvg_mask], c='lightgray', s=10, label='Not HVG', alpha=0.5)
-    plt.scatter(means[hvg_mask], dispersions[hvg_mask], c='red', s=10, label='HVG', alpha=0.8)
-    plt.xlabel('Mean expression')
-    plt.ylabel('Dispersion')
-    plt.title('Highly Variable Genes')
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=300)
-    plt.close()
-
 # -----------------------------
 # Load Data
 # -----------------------------
