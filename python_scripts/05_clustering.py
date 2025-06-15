@@ -38,9 +38,6 @@ TOP_N_GENES = 10               # Number of top marker genes per cluster to save 
 
 logging.info("Step 5 started: Clustering and Marker Gene Analysis")
 
-logging.info(f"Parameters - LEIDEN_RESOLUTION: {LEIDEN_RESOLUTION}, N_NEIGHBORS: {N_NEIGHBORS}, "
-             f"N_PCS: {N_PCS}, RANK_GENES_METHOD: {RANK_GENES_METHOD}, TOP_N_GENES: {TOP_N_GENES}")
-
 # -----------------------------
 # Load normalized and reduced data from Step 4
 # -----------------------------
@@ -48,7 +45,7 @@ adata = sc.read(INPUT_FILE)
 logging.info(f"Loaded normalized data: {adata.n_obs} cells, {adata.n_vars} genes")
 
 # -----------------------------
-# Recompute neighbors if needed (adjust parameters)
+# Recompute neighbors
 # -----------------------------
 logging.info(f"Computing neighbors with n_neighbors={N_NEIGHBORS}, n_pcs={N_PCS}")
 sc.pp.neighbors(adata, n_neighbors=N_NEIGHBORS, n_pcs=N_PCS)
@@ -74,7 +71,7 @@ logging.info("Generating UMAP plots colored by clusters and treatment")
 # UMAP colored by cluster
 sc.pl.umap(adata, color="cluster", save=f"_{FIG_NAME1}", show=False)
 
-# UMAP colored by treatment (if present)
+# UMAP colored by treatment
 if "treatment" in adata.obs.columns:
     sc.pl.umap(adata, color="treatment", save=f"_{FIG_NAME2}", show=False)
 else:
@@ -88,8 +85,8 @@ sc.tl.rank_genes_groups(adata, groupby="cluster", method=RANK_GENES_METHOD)
 
 # Save marker gene results to CSV files
 clusters = adata.obs["cluster"].cat.categories if hasattr(adata.obs["cluster"], "cat") else sorted(adata.obs["cluster"].unique())
-summary_rows = []
 
+summary_rows = []
 for cluster in clusters:
     df = sc.get.rank_genes_groups_df(adata, group=cluster)
     df["cluster"] = cluster
@@ -134,7 +131,6 @@ with open(HTML_REPORT, "w") as f:
 
     f.write(f'<h2>Summary</h2>\n<p><a href="../results/05_top_marker_genes_summary.csv">Top {TOP_N_GENES} marker genes summary (CSV)</a></p>\n')
     f.write("</body></html>")
-
 logging.info(f"Generated HTML report at {HTML_REPORT}")
 
 # -----------------------------

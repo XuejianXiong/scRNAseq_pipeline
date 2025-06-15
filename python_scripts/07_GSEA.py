@@ -19,30 +19,15 @@ from pipeline_utils import setup_dirs_logs
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # -----------------------------
-# User-Adjustable Parameters
+# Plot Functions
 # -----------------------------
-RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("07_log.txt")
-GSEA_DIR = Path(f"{RESULTS_DIR}/GSEA")
-GSEA_DIR.mkdir(parents=True, exist_ok=True)
-
-INPUT_FILE = RESULTS_DIR / "06_de_data.h5ad"
-HTML_REPORT = RESULTS_DIR / "07_report.html"
-
-GENE_SET_LIBRARY = "KEGG_2016"
-MIN_GENESET_SIZE = 15
-MAX_GENESET_SIZE = 500
-PERMUTATION_NUM = 100
-SEED = 42
-GROUPINGS = ['treatment', 'leiden']
-# -----------------------------
-
-
-logging.info("Step 7 started: GSEA and Visualization")
-
-# -----------------------------
-# Helper Functions
-# -----------------------------
-def plot_leading_edge_heatmap(adata, lead_genes_str, groupby, outdir, grp):
+def plot_leading_edge_heatmap(
+        adata: sc.AnnData, 
+        lead_genes_str: str, 
+        groupby: str, 
+        outdir: str, 
+        grp: str
+    ) -> None:
     lead_genes = lead_genes_str.split(';')
     genes_in_data = [g for g in lead_genes if g in adata.var_names]
     if not genes_in_data:
@@ -67,7 +52,9 @@ def plot_leading_edge_heatmap(adata, lead_genes_str, groupby, outdir, grp):
     plt.close()
     logging.info(f"Saved heatmap: {outfile}")
 
-def plot_dotplot_top_pathways(df_gsea, outdir, groupby_col, grp):
+def plot_dotplot_top_pathways(
+        df_gsea: pd.DataFrame, outdir: str, groupby_col: str, grp: str
+    ) -> None:
     df_top = df_gsea.sort_values('FDR q-val').head(10).copy()
     sizes = df_top['Gene %'].str.split('/').apply(lambda x: int(x[0])/int(x[1]) if len(x) == 2 else 0)
     sizes = sizes * 1000
@@ -89,7 +76,9 @@ def plot_dotplot_top_pathways(df_gsea, outdir, groupby_col, grp):
     plt.close()
     logging.info(f"Saved dot plot: {outfile}")
 
-def plot_barplot_nes(df_gsea, outdir, groupby_col, grp):
+def plot_barplot_nes(
+        df_gsea: pd.DataFrame, outdir: str, groupby_col: str, grp: str
+    ) -> None:
     df_top = df_gsea.sort_values('FDR q-val').head(10).iloc[::-1]
     plt.figure(figsize=(8, 5))
     sns.barplot(x='NES', y='Term', data=df_top, palette='coolwarm')
@@ -101,6 +90,27 @@ def plot_barplot_nes(df_gsea, outdir, groupby_col, grp):
     plt.close()
     logging.info(f"Saved bar plot: {outfile}")
 
+
+# -----------------------------
+# User-Adjustable Parameters
+# -----------------------------
+RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("07_log.txt")
+GSEA_DIR = Path(f"{RESULTS_DIR}/GSEA")
+GSEA_DIR.mkdir(parents=True, exist_ok=True)
+
+INPUT_FILE = RESULTS_DIR / "06_de_data.h5ad"
+HTML_REPORT = RESULTS_DIR / "07_report.html"
+
+GENE_SET_LIBRARY = "KEGG_2016"
+MIN_GENESET_SIZE = 15
+MAX_GENESET_SIZE = 500
+PERMUTATION_NUM = 100
+SEED = 42
+GROUPINGS = ['treatment', 'leiden']
+# -----------------------------
+
+
+logging.info("Step 7 started: GSEA and Visualization")
 # -----------------------------
 # Run GSEA
 # -----------------------------
