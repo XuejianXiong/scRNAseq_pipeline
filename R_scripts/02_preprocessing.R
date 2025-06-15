@@ -17,7 +17,6 @@ source("R_scripts/pipeline_utils.R")
 # -----------------------------
 # Parameters and Paths
 # -----------------------------
-
 data_dir <- "data/GSE149383"
 output_dir <- "results"
 output_rds <- file.path(output_dir, "02_merged_data.rds")
@@ -39,6 +38,7 @@ sample_metadata <- list(
     timepoint = "D3"
   )
 )
+
 
 # -----------------------------
 # Functions
