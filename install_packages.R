@@ -3,55 +3,67 @@
 # Installs required R packages for single-cell RNA-seq analysis
 # ------------------------
 
+# List of CRAN packages
 cran_packages <- c(
-  "tidyverse",
   "Seurat",
-  "patchwork",
   "Matrix",
-  "data.table",
-  "ggplot2",
-  "readr",
   "dplyr",
-  "cowplot",
-  "sp",
-  "shiny",
-  "plotly",
-  "reticulate",
-  "stringi",
-  "msigdbr",
+  "SeuratObject",
+  "ggplot2",
+  "patchwork",
+  "readr",
   "tibble"
 )
 
+# Bioconductor packages
 bioc_packages <- c(
-  "SingleCellExperiment",
-  "scater",
-  "scran",
-  "BiocManager",
-  "AnnotationDbi",
-  "org.Hs.eg.db",
-  "clusterProfiler",
-  "ComplexHeatmap"
+  "fgsea",
+  "msigdbr",
+  "pheatmap",
+  "knitr"
 )
 
-# Install CRAN packages
-install_if_missing <- function(pkg) {
+# -----------------------------
+# Functions
+# -----------------------------
+# Function to install CRAN packages if missing
+install_if_missing_cran <- function(pkg) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
+    cat(sprintf("📦 Installing CRAN package: %s\n", pkg))
     install.packages(pkg, dependencies = TRUE)
+  } else {
+    cat(sprintf("✔ CRAN package already installed: %s\n", pkg))
   }
 }
 
-cat("📦 Installing CRAN packages...\n")
-invisible(lapply(cran_packages, install_if_missing))
+# Function to install Bioconductor packages if missing
+install_if_missing_bioc <- function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    cat(sprintf("📦 Installing Bioconductor package: %s\n", pkg))
+    BiocManager::install(pkg, update = FALSE, ask = FALSE)
+  } else {
+    cat(sprintf("✔ Bioconductor package already installed: %s\n", pkg))
+  }
+}
+
+
+# Install BiocManager first if needed
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  cat("📦 Installing BiocManager...\n")
+  install.packages("BiocManager")
+}
+
+# Deduplicate lists in case of overlap
+cran_packages <- unique(cran_packages)
+bioc_packages <- unique(bioc_packages)
+
+# Install CRAN packages
+cat("\n📌 Installing CRAN packages...\n")
+invisible(lapply(cran_packages, install_if_missing_cran))
 
 # Install Bioconductor packages
-cat("📦 Installing Bioconductor packages...\n")
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
+cat("\n📌 Installing Bioconductor packages...\n")
+invisible(lapply(bioc_packages, install_if_missing_bioc))
 
-for (pkg in bioc_packages) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    BiocManager::install(pkg, update = FALSE, ask = FALSE)
-  }
-}
 
-cat("✅ All required R packages have been installed.\n")
+cat("\n✅ All required R packages have been installed.\n")
