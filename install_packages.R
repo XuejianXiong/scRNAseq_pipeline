@@ -17,7 +17,9 @@ cran_packages <- c(
   "shiny",
   "plotly",
   "reticulate",
-  "stringi"
+  "stringi",
+  "msigdbr",
+  "tibble"
 )
 
 bioc_packages <- c(
