@@ -11,6 +11,8 @@ library(Seurat)
 library(ggplot2)
 library(dplyr)
 
+source("R_scripts/pipeline_utils.R")
+
 # -----------------------------
 # Parameters and Paths
 # -----------------------------
@@ -35,27 +37,6 @@ params <- list(
   n_pcs = 40,
   top_n_genes = 10
 )
-
-
-# -----------------------------
-# Functions
-# -----------------------------
-# Function to set the log message
-log_msg <- function(msg) {
-  
-  # Generate current timestamp in YYYY-MM-DD HH:MM:SS format
-  timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
-  
-  # Construct log line with timestamp prefix
-  line <- sprintf("[%s] %s", timestamp, msg)
-  
-  # Print log message to console
-  cat(line, "\n")
-  
-  # Append log message to the specified log file
-  # Assumes 'log_file' is a global variable set elsewhere in the script
-  write(line, file = log_file, append = TRUE)
-}
 
 
 log_msg("Step 5 started: Clustering and Marker Gene Analysis")
