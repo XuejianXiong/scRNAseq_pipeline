@@ -49,7 +49,7 @@ Run R scripts in RStudio or VS Code:
 
 ```bash
 ./R_scripts/00_setup.sh                           # Set up directories
-./R_scripts/01_download_data.sh                   # Download and extract GSE149383
+./R_scripts/01_download_data.sh                   # Download data
 source("R_scripts/02_preprocessing.R")            # Merge datasets with metadata
 source("R_scripts/03_qc.R")                       # Perform quality control
 source("R_scripts/04_normalization_dimred.R")     # Normalize and run PCA/UMAP
@@ -71,7 +71,7 @@ Then run each step:
 
 ```bash
 ./python_scripts/00_setup.sh                     # Setup directories
-./python_scripts/01_download_data.sh             # Download and extract GSE149383
+./python_scripts/01_download_data.sh             # Download data
 python python_scripts/02_preprocessing.py        # Load, filter, and merge datasets
 python python_scripts/03_qc.py                   # Perform quality control
 python python_scripts/04_normalization_dimred.py # Normalize and run PCA/UMAP
@@ -95,6 +95,8 @@ scRNAseq_pipeline/
 ├── results/               # Output data files
 └── data/
 |   └── GSE149383/         # Raw and processed datasets
+|   └── raw_fastq/         # Raw fastq files
+|   └── genome/            # HG38 reference
 ├── R_scripts/             # R scripts for each pipeline step
 ├── python_scripts/        # Python scripts for each pipeline step
 
