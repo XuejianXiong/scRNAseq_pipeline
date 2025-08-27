@@ -1,12 +1,10 @@
 # -----------------------------
-# Step 2: Load and Merge Datasets with Metadata
+# Step 2: Load datasets (single or multiple) based on SAMPLE_METADATA
 # -----------------------------
 
 import scanpy as sc
-import pandas as pd
-import logging
+from logzero import logger
 from pathlib import Path
-import os
 import warnings
 
 from pipeline_utils import setup_dirs_logs
@@ -16,21 +14,33 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # -----------------------------
 # User-Adjustable Parameters
 # -----------------------------
+#PROJ_NAME = "cropseq" 
+PROJ_NAME = "retina"  
 
-DATA_DIR = Path("data/GSE149383")
-RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("02_log.txt")
+RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("02_log.txt", PROJ_NAME)
 MERGED_DATA_FILE = RESULTS_DIR / "02_merged_data.h5ad"
 METADATA_CSV = RESULTS_DIR / "02_merged_metadata.csv"
 
-# Sample metadata dictionary (manually defined)
-SAMPLE_METADATA = {
-    "GSM3972651_PC9D0": {"batch": "batch1", "treatment": "DMSO", "timepoint": "D0"},
-    "GSM3972652_PC9D3Erl": {"batch": "batch1", "treatment": "Erlotinib", "timepoint": "D3"}
-}
-# -----------------------------
+# Define metadata here; number of entries determines single vs multiple datasets
+if PROJ_NAME == "cropseq":
+    DATA_DIR = Path(f"data/{PROJ_NAME}/GSE149383")
+    SAMPLE_METADATA = {
+        "GSM3972651_PC9D0": {"batch": "batch1", "treatment": "DMSO", "timepoint": "D0"},
+        "GSM3972652_PC9D3Erl": {"batch": "batch1", "treatment": "Erlotinib", "timepoint": "D3"}
+    }
+elif PROJ_NAME == "retina":
+    DATA_DIR = Path(f"data/{PROJ_NAME}/SRA559821")
+    SAMPLE_METADATA = {
+        "SRA559821": {
+            "tissue": "Retina", 
+            "protocol": "C1_Fluidigm", 
+            "species": "Homo_sapiens", 
+            "instrument": "Illumina_HiSeq2500"
+        }
+    }
 
+logger.info("Step 2 started: Load datasets based on SAMPLE_METADATA")
 
-logging.info("Step 2 started: Load and merge datasets with metadata")
 
 # -----------------------------
 # Load each sample, annotate metadata, and collect AnnData objects
@@ -48,25 +58,30 @@ for sample_id, meta in SAMPLE_METADATA.items():
     adata.obs["sample"] = sample_id
 
     adatas.append(adata)
-    logging.info(f"Loaded sample '{sample_id}' with {adata.n_obs} cells and {adata.n_vars} genes")
+    logger.info(f"Loaded sample '{sample_id}' with {adata.n_obs} cells and {adata.n_vars} genes")
+
+if len(SAMPLE_METADATA) > 1:
+    # -----------------------------
+    # Concatenate all samples into one AnnData object
+    # -----------------------------
+    adata_merged = adatas[0].concatenate(
+        adatas[1:],
+        batch_key="sample_id",
+        batch_categories=list(SAMPLE_METADATA.keys())
+    )
+    logger.info(f"Merged {len(adatas)} samples: resulting data has {adata_merged.n_obs} cells × {adata_merged.n_vars} genes")
+
+elif len(SAMPLE_METADATA) == 1:
+    adata_merged = adatas[0]
+
 
 # -----------------------------
-# Concatenate all samples into one AnnData object
+# Save AnnData and metadata CSV
 # -----------------------------
-adata_merged = adatas[0].concatenate(
-    adatas[1:],
-    batch_key="sample_id",
-    batch_categories=list(SAMPLE_METADATA.keys())
-)
-logging.info(f"Merged {len(adatas)} samples: resulting data has {adata_merged.n_obs} cells × {adata_merged.n_vars} genes")
-
-# -----------------------------
-# Save merged AnnData and metadata CSV
-# -----------------------------
-adata_merged.write(MERGED_DATA_FILE)
-adata_merged.obs.to_csv(METADATA_CSV)
-logging.info(f"Saved merged AnnData to '{MERGED_DATA_FILE}'")
-logging.info(f"Saved merged metadata table to '{METADATA_CSV}'")
-
+adatas[0].write(MERGED_DATA_FILE)
+adatas[0].obs.to_csv(METADATA_CSV)
+logger.info(f"Saved AnnData to '{MERGED_DATA_FILE}'")
+logger.info(f"Saved metadata table to '{METADATA_CSV}'")
+    
 
 print("✅ Step 2 complete: Datasets loaded, merged, and metadata added.")

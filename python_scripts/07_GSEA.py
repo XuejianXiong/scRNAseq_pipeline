@@ -10,9 +10,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import datetime
-import logging
+from logzero import logger
 from pathlib import Path
 import warnings
+import sys
 
 from pipeline_utils import setup_dirs_logs
 
@@ -31,7 +32,7 @@ def plot_leading_edge_heatmap(
     lead_genes = lead_genes_str.split(';')
     genes_in_data = [g for g in lead_genes if g in adata.var_names]
     if not genes_in_data:
-        logging.warning(f"No leading edge genes found in adata for group {grp}")
+        logger.warning(f"No leading edge genes found in adata for group {grp}")
         return
     expr = adata[:, genes_in_data].X
     if hasattr(expr, "toarray"):
@@ -50,7 +51,7 @@ def plot_leading_edge_heatmap(
     outfile = f"{outdir}/heatmap_leading_edge_{groupby}_{grp}.png"
     plt.savefig(outfile, dpi=150)
     plt.close()
-    logging.info(f"Saved heatmap: {outfile}")
+    logger.info(f"Saved heatmap: {outfile}")
 
 def plot_dotplot_top_pathways(
         df_gsea: pd.DataFrame, outdir: str, groupby_col: str, grp: str
@@ -74,7 +75,7 @@ def plot_dotplot_top_pathways(
     outfile = f"{outdir}/dotplot_top_pathways_{groupby_col}_{grp}.png"
     plt.savefig(outfile, dpi=150)
     plt.close()
-    logging.info(f"Saved dot plot: {outfile}")
+    logger.info(f"Saved dot plot: {outfile}")
 
 def plot_barplot_nes(
         df_gsea: pd.DataFrame, outdir: str, groupby_col: str, grp: str
@@ -88,13 +89,16 @@ def plot_barplot_nes(
     outfile = f"{outdir}/barplot_nes_{groupby_col}_{grp}.png"
     plt.savefig(outfile, dpi=150)
     plt.close()
-    logging.info(f"Saved bar plot: {outfile}")
+    logger.info(f"Saved bar plot: {outfile}")
 
 
 # -----------------------------
 # User-Adjustable Parameters
 # -----------------------------
-RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("07_log.txt")
+PROJ_NAME = "cropseq"  
+#PROJ_NAME = "retina"  
+
+RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("07_log.txt", PROJ_NAME)
 GSEA_DIR = Path(f"{RESULTS_DIR}/GSEA")
 GSEA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -106,29 +110,43 @@ MIN_GENESET_SIZE = 15
 MAX_GENESET_SIZE = 500
 PERMUTATION_NUM = 100
 SEED = 42
-GROUPINGS = ['treatment', 'leiden']
+
 # -----------------------------
 
 
-logging.info("Step 7 started: GSEA and Visualization")
+logger.info("Step 7 started: GSEA and Visualization")
+# -----------------------------
+# Load data
+# -----------------------------
+adata = sc.read(INPUT_FILE)
+logger.info(f"Loaded DE data: {adata.n_obs} cells × {adata.n_vars} genes")
+
+if "treatment" in adata.obs.columns:
+    GROUPINGS = ['treatment', 'leiden']  # Grouping columns for GSEA
+elif "sample" in adata.obs.columns:
+    GROUPINGS = ['sample', 'leiden']  # Grouping columns for GSEA
+else:
+    logger.error(
+        "Metadata 'treatment' and 'sample' not found in adata.obs, skipping GSEA plot."
+    )
+    sys.exit(1)  # Stop execution immediately
+
 # -----------------------------
 # Run GSEA
 # -----------------------------
-adata = sc.read(INPUT_FILE)
-logging.info(f"Loaded DE data: {adata.n_obs} cells × {adata.n_vars} genes")
 report_data = {}
 
 for groupby_col in GROUPINGS:
     key_added = f"rank_genes_{groupby_col}"
     if key_added not in adata.uns:
-        logging.warning(f"Key '{key_added}' not found in AnnData.uns — skipping {groupby_col}")
+        logger.warning(f"Key '{key_added}' not found in AnnData.uns — skipping {groupby_col}")
         continue
 
     groups = sorted(adata.obs[groupby_col].unique())
     report_data[groupby_col] = {}
 
     for grp in groups:
-        logging.info(f"Running GSEA for {groupby_col} = {grp}")
+        logger.info(f"Running GSEA for {groupby_col} = {grp}")
         df = sc.get.rank_genes_groups_df(adata, group=grp, key=key_added)
         ranked_gene_list = df.set_index('names')['logfoldchanges'].sort_values(ascending=False)
 
@@ -149,11 +167,11 @@ for groupby_col in GROUPINGS:
                 no_plot=False
             )
         except Exception as e:
-            logging.error(f"GSEA failed for {groupby_col} = {grp}: {e}")
+            logger.error(f"GSEA failed for {groupby_col} = {grp}: {e}")
             continue
 
         if gsea_res.res2d.empty:
-            logging.warning(f"No significant enrichment for {groupby_col} = {grp}")
+            logger.warning(f"No significant enrichment for {groupby_col} = {grp}")
             continue
 
         res_csv = f"{outdir}/gseapy.gene_set.prerank.report.csv"
@@ -164,7 +182,7 @@ for groupby_col in GROUPINGS:
                 if isinstance(lead_genes_str, str) and lead_genes_str:
                     plot_leading_edge_heatmap(adata, lead_genes_str, groupby_col, outdir, grp)
                 else:
-                    logging.warning(f"No leading edge genes info for {groupby_col} = {grp}")
+                    logger.warning(f"No leading edge genes info for {groupby_col} = {grp}")
 
                 plot_dotplot_top_pathways(df_enrich, outdir, groupby_col, grp)
                 plot_barplot_nes(df_enrich, outdir, groupby_col, grp)
@@ -173,11 +191,11 @@ for groupby_col in GROUPINGS:
                     "csv": res_csv,
                     "outdir": outdir
                 }
-                logging.info(f"Saved GSEA results for {groupby_col} = {grp}")
+                logger.info(f"Saved GSEA results for {groupby_col} = {grp}")
             else:
-                logging.warning(f"Empty enrichment DataFrame for {groupby_col} = {grp}")
+                logger.warning(f"Empty enrichment DataFrame for {groupby_col} = {grp}")
         else:
-            logging.warning(f"GSEA result CSV missing for {groupby_col} = {grp}")
+            logger.warning(f"GSEA result CSV missing for {groupby_col} = {grp}")
 
 # -----------------------------
 # Generate HTML Report
@@ -203,7 +221,7 @@ with open(HTML_REPORT, "w") as f:
                     f.write(f'<img src="{rel_img_path}" width="700"><br><br>\n')
 
     f.write("</body></html>")
-logging.info(f"Generated HTML report at {HTML_REPORT}")
+logger.info(f"Generated HTML report at {HTML_REPORT}")
 
 
 print("✅ Step 7 complete: GSEA analysis and report generated.")

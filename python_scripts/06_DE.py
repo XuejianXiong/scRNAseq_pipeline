@@ -7,11 +7,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import logging
+from logzero import logger
 from pathlib import Path
 import datetime
-import os
 import warnings
+import sys
 
 from pipeline_utils import setup_dirs_logs
 
@@ -49,7 +49,10 @@ def plot_volcano(df: pd.DataFrame, title: str, save_path: Path) -> None:
 # -----------------------------
 # User-adjustable parameters
 # -----------------------------
-RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("06_log.txt")
+PROJ_NAME = "cropseq"  
+#PROJ_NAME = "retina"  
+
+RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("06_log.txt", PROJ_NAME)
 CSV_DIR = Path(f"{RESULTS_DIR}/DE_csv")
 CSV_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -63,22 +66,32 @@ FIG_NAME2 = "06_volcano"
 CUTOFF_PVALS = 0.05
 CUTOFF_DF = 1
 RANK_GENES_METHOD = "wilcoxon"  # Marker gene ranking method
-GROUPINGS = ['treatment', 'leiden']  # Grouping columns for DE
+
 # -----------------------------
 
 
-logging.info("Step 6 started: Differential Expression Analysis")
+logger.info("Step 6 started: Differential Expression Analysis")
 # -----------------------------
 # Load data
 # -----------------------------
 adata = sc.read(INPUT_FILE)
-logging.info(f"Loaded clustered data: {adata.n_obs} cells × {adata.n_vars} genes")
+logger.info(f"Loaded clustered data: {adata.n_obs} cells × {adata.n_vars} genes")
+
+if "treatment" in adata.obs.columns:
+    GROUPINGS = ['treatment', 'leiden']  # Grouping columns for DE
+elif "sample" in adata.obs.columns:
+    GROUPINGS = ['sample', 'leiden']  # Grouping columns for DE
+else:
+    logger.error(
+        "Metadata 'treatment' and 'sample' not found in adata.obs, skipping DE plot."
+    )
+    sys.exit(1)  # Stop execution immediately
 
 # -----------------------------
 # Differential Expression
 # -----------------------------
 for groupby_col in GROUPINGS:
-    logging.info(f"Running DE analysis grouped by '{groupby_col}'")
+    logger.info(f"Running DE analysis grouped by '{groupby_col}'")
     key_added = f"rank_genes_{groupby_col}"
     sc.tl.rank_genes_groups(adata, groupby=groupby_col, method=RANK_GENES_METHOD, key_added=key_added, pts=True)
 
@@ -87,11 +100,11 @@ for groupby_col in GROUPINGS:
         df = sc.get.rank_genes_groups_df(adata, group=grp, key=key_added)
         csv_path = CSV_DIR / f"{FIG_NAME1}_{groupby_col}_{grp}.csv"
         df.to_csv(csv_path, index=False)
-        logging.info(f"Saved DE CSV for {groupby_col}={grp} at {csv_path}")
+        logger.info(f"Saved DE CSV for {groupby_col}={grp} at {csv_path}")
 
         fig_path = FIGURE_DIR / f"{FIG_NAME2}_{groupby_col}_{grp}.png"
         plot_volcano(df, f"Volcano Plot: {groupby_col}={grp}", fig_path)
-        logging.info(f"Saved volcano plot for {groupby_col}={grp} at {fig_path}")
+        logger.info(f"Saved volcano plot for {groupby_col}={grp} at {fig_path}")
 
 # -----------------------------
 # Generate HTML Report
@@ -112,12 +125,17 @@ with open(HTML_REPORT, "w") as f:
     f.write("<h1>Step 6 Report: Differential Expression Analysis</h1>\n")
     f.write(f"<p><b>Date:</b> {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>\n")
 
+    # Use absolute paths in the report HTML
+    FIGURE_DIR_ABS = FIGURE_DIR.resolve()
+
     for groupby_col in GROUPINGS:
         f.write(f"<h2>DE Results by {groupby_col.capitalize()}</h2>\n")
         for grp in sorted(adata.obs[groupby_col].unique()):
+
             csv_name = f"DE_csv/{FIG_NAME1}_{groupby_col}_{grp}.csv"
-            fig_name = f"../figures/{FIG_NAME2}_{groupby_col}_{grp}.png"
+            fig_name = f"{FIGURE_DIR_ABS}/{FIG_NAME2}_{groupby_col}_{grp}.png"
             df_preview = pd.read_csv(CSV_DIR / f"{FIG_NAME1}_{groupby_col}_{grp}.csv").head(10)
+
             f.write(f"<h3>{groupby_col.capitalize()}: {grp}</h3>\n")
             f.write(f"<p>Top 10 DE genes:</p>\n")
             f.write(df_preview.to_html(index=False, classes="table table-striped", border=0))
@@ -125,13 +143,14 @@ with open(HTML_REPORT, "w") as f:
             f.write(f"<img src=\"{fig_name}\" alt=\"Volcano plot {groupby_col} {grp}\"><br>\n")
 
     f.write("</body></html>\n")
-logging.info(f"Generated HTML report at {HTML_REPORT}")
+
+logger.info(f"Generated HTML report at {HTML_REPORT}")
 
 # -----------------------------
 # Save updated AnnData
 # -----------------------------
 adata.write(OUTPUT_FILE)
-logging.info(f"Saved DE results to {OUTPUT_FILE}")
+logger.info(f"Saved DE results to {OUTPUT_FILE}")
 
 
 print("✅ Step 6 complete: Differential expression analysis done and saved.")

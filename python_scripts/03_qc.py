@@ -5,9 +5,9 @@
 import scanpy as sc
 import pandas as pd
 import numpy as np
-import logging
+from logzero import logger
 from pathlib import Path
-import os
+import sys
 import datetime
 import warnings
 
@@ -18,7 +18,10 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # -----------------------------
 # User-Adjustable Parameters
 # -----------------------------
-RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("03_log.txt")
+#PROJ_NAME = "cropseq" 
+PROJ_NAME = "retina"  
+
+RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("03_log.txt", PROJ_NAME)
 INPUT_FILE = RESULTS_DIR / "02_merged_data.h5ad"
 OUTPUT_FILE = RESULTS_DIR / "03_filtered_data.h5ad"
 HTML_REPORT = RESULTS_DIR / "03_report.html"
@@ -26,17 +29,30 @@ HTML_REPORT = RESULTS_DIR / "03_report.html"
 MIN_GENES = 200
 MAX_PCT_MT = 10
 MIN_CELLS_PER_GENE = 3
-GROUP_COLS = ['treatment']
+    
 # -----------------------------
 
+# Control Scanpy output (independent of logzero)
+sc.settings.verbosity = 1         # minimal output, no "saving figure..." warnings
+sc.settings.logfile = LOG_FILE    # redirect scanpy logs to your log file
 
-logging.info("Step 3 started: Quality Control")
+logger.info("Step 3 started: Quality Control")
 
 # -----------------------------
 # Load merged dataset from step 2
 # -----------------------------
 adata = sc.read(INPUT_FILE)
-logging.info(f"Loaded merged data: {adata.n_obs} cells × {adata.n_vars} genes")
+logger.info(f"Loaded merged data: {adata.n_obs} cells × {adata.n_vars} genes")
+
+if 'treatment' in adata.obs.columns:
+    GROUP_COLS = ['treatment']
+elif 'sample' in adata.obs.columns:
+    GROUP_COLS = ['sample']
+else:
+    GROUP_COLS = []
+    logger.warning("No 'treatment' or 'sample' column found in adata.obs. Exiting.")
+    sys.exit(1)
+
 
 # -----------------------------
 # Annotate mitochondrial genes and calculate QC metrics
@@ -57,7 +73,7 @@ for group in GROUP_COLS:
         save=f"_qc_violin_by_{group}.png",
         show=False
     )
-    logging.info(f"Saved violin plot grouped by {group} before filtering")
+    logger.info(f"Saved violin plot grouped by {group} before filtering")
 
     sc.pl.scatter(
         adata,
@@ -75,7 +91,7 @@ for group in GROUP_COLS:
         save=f"_qc_scatter_genes_by_{group}_before.png",
         show=False
     )
-    logging.info(f"Saved scatter plots colored by {group} before filtering")
+    logger.info(f"Saved scatter plots colored by {group} before filtering")
 
 pre_shape = adata.shape
 
@@ -87,8 +103,8 @@ sc.pp.filter_genes(adata, min_cells=MIN_CELLS_PER_GENE)
 adata = adata[adata.obs['pct_counts_mt'] < MAX_PCT_MT, :]
 
 post_shape = adata.shape
-logging.info(f"Filtering complete — Before: {pre_shape}, After: {post_shape}")
-logging.info(f"Applied thresholds — min_genes: {MIN_GENES}, min_cells_per_gene: {MIN_CELLS_PER_GENE}, max_pct_mito: {MAX_PCT_MT}%")
+logger.info(f"Filtering complete — Before: {pre_shape}, After: {post_shape}")
+logger.info(f"Applied thresholds — min_genes: {MIN_GENES}, min_cells_per_gene: {MIN_CELLS_PER_GENE}, max_pct_mito: {MAX_PCT_MT}%")
 
 # -----------------------------
 # Save QC plots after filtering
@@ -103,7 +119,7 @@ for group in GROUP_COLS:
         save=f"_qc_violin_by_{group}_after.png",
         show=False
     )
-    logging.info(f"Saved violin plot grouped by {group} after filtering")
+    logger.info(f"Saved violin plot grouped by {group} after filtering")
 
     sc.pl.scatter(
         adata,
@@ -121,17 +137,20 @@ for group in GROUP_COLS:
         save=f"_qc_scatter_genes_by_{group}_after.png",
         show=False
     )
-    logging.info(f"Saved scatter plots colored by {group} after filtering")
+    logger.info(f"Saved scatter plots colored by {group} after filtering")
 
 # -----------------------------
 # Save filtered data
 # -----------------------------
 adata.write(OUTPUT_FILE)
-logging.info(f"Filtered data saved to {OUTPUT_FILE}")
+logger.info(f"Filtered data saved to {OUTPUT_FILE}")
 
 # -----------------------------
 # Generate HTML report with embedded images
 # -----------------------------
+# Use absolute paths in the report HTML
+FIGURE_DIR_ABS = FIGURE_DIR.resolve()
+
 with open(HTML_REPORT, "w") as f:
     f.write(f"""<html><head><title>QC Report</title></head><body>
 <h1>Single-Cell QC Report</h1>
@@ -145,13 +164,13 @@ with open(HTML_REPORT, "w") as f:
 """)
 
     for group in GROUP_COLS:
-        f.write(f'<img src="../{FIGURE_DIR}/violin_qc_violin_by_{group}.png" width="600"/><br>\n')
+        f.write(f'<img src="{FIGURE_DIR_ABS}/violin_qc_violin_by_{group}.png" width="600"/><br>\n')
 
     f.write("<h3>Scatter plots colored by metadata</h3>\n")
 
     for group in GROUP_COLS:
-        f.write(f'<img src="../{FIGURE_DIR}/scatter_qc_scatter_mt_by_{group}_before.png" width="600"/><br>\n')
-        f.write(f'<img src="../{FIGURE_DIR}/scatter_qc_scatter_genes_by_{group}_before.png" width="600"/><br>\n')
+        f.write(f'<img src="{FIGURE_DIR_ABS}/scatter_qc_scatter_mt_by_{group}_before.png" width="600"/><br>\n')
+        f.write(f'<img src="{FIGURE_DIR_ABS}/scatter_qc_scatter_genes_by_{group}_before.png" width="600"/><br>\n')
 
     f.write("""
 <h2>QC Metrics After Filtering</h2>
@@ -159,16 +178,16 @@ with open(HTML_REPORT, "w") as f:
 """)
 
     for group in GROUP_COLS:
-        f.write(f'<img src="../{FIGURE_DIR}/violin_qc_violin_by_{group}_after.png" width="600"/><br>\n')
+        f.write(f'<img src="{FIGURE_DIR_ABS}/violin_qc_violin_by_{group}_after.png" width="600"/><br>\n')
 
     f.write("<h3>Scatter plots colored by metadata</h3>\n")
 
     for group in GROUP_COLS:
-        f.write(f'<img src="../{FIGURE_DIR}/scatter_qc_scatter_mt_by_{group}_after.png" width="600"/><br>\n')
-        f.write(f'<img src="../{FIGURE_DIR}/scatter_qc_scatter_genes_by_{group}_after.png" width="600"/><br>\n')
+        f.write(f'<img src="{FIGURE_DIR_ABS}/scatter_qc_scatter_mt_by_{group}_after.png" width="600"/><br>\n')
+        f.write(f'<img src="{FIGURE_DIR_ABS}/scatter_qc_scatter_genes_by_{group}_after.png" width="600"/><br>\n')
 
     f.write("</body></html>\n")
-logging.info(f"HTML QC report generated at: {HTML_REPORT}")
+logger.info(f"HTML QC report generated at: {HTML_REPORT}")
 
 
 print("✅ Step 3 complete: Quality control applied, filtered data saved.")

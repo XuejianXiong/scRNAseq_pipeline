@@ -4,7 +4,7 @@
 
 import scanpy as sc
 import pandas as pd
-import logging
+from logzero import logger
 from pathlib import Path
 import os
 import warnings
@@ -16,7 +16,10 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # -----------------------------
 # User-adjustable parameters
 # -----------------------------
-RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("05_log.txt")
+#PROJ_NAME = "cropseq"  
+PROJ_NAME = "retina"  
+
+RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("05_log.txt", PROJ_NAME)
 MARKER_DIR = Path(f"{RESULTS_DIR}/markers")
 MARKER_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -36,24 +39,24 @@ TOP_N_GENES = 10               # Number of top marker genes per cluster to save 
 # -----------------------------
 
 
-logging.info("Step 5 started: Clustering and Marker Gene Analysis")
+logger.info("Step 5 started: Clustering and Marker Gene Analysis")
 
 # -----------------------------
 # Load normalized and reduced data from Step 4
 # -----------------------------
 adata = sc.read(INPUT_FILE)
-logging.info(f"Loaded normalized data: {adata.n_obs} cells, {adata.n_vars} genes")
+logger.info(f"Loaded normalized data: {adata.n_obs} cells, {adata.n_vars} genes")
 
 # -----------------------------
 # Recompute neighbors
 # -----------------------------
-logging.info(f"Computing neighbors with n_neighbors={N_NEIGHBORS}, n_pcs={N_PCS}")
+logger.info(f"Computing neighbors with n_neighbors={N_NEIGHBORS}, n_pcs={N_PCS}")
 sc.pp.neighbors(adata, n_neighbors=N_NEIGHBORS, n_pcs=N_PCS)
 
 # -----------------------------
 # Clustering with Leiden algorithm
 # -----------------------------
-logging.info(f"Running Leiden clustering with resolution={LEIDEN_RESOLUTION}")
+logger.info(f"Running Leiden clustering with resolution={LEIDEN_RESOLUTION}")
 sc.tl.leiden(adata, resolution=LEIDEN_RESOLUTION)
 
 # Save clustering labels in obs
@@ -61,26 +64,32 @@ adata.obs["cluster"] = adata.obs["leiden"]
 
 # Log cluster sizes
 cluster_sizes = adata.obs['cluster'].value_counts().sort_index()
-logging.info(f"Cluster sizes:\n{cluster_sizes.to_string()}")
+logger.info(f"Cluster sizes:\n{cluster_sizes.to_string()}")
 
 # -----------------------------
 # Plot UMAP with clusters and treatment metadata
 # -----------------------------
-logging.info("Generating UMAP plots colored by clusters and treatment")
+logger.info("Generating UMAP plots colored by clusters and treatment")
 
 # UMAP colored by cluster
 sc.pl.umap(adata, color="cluster", save=f"_{FIG_NAME1}", show=False)
 
-# UMAP colored by treatment
+# UMAP colored by treatment/sample
 if "treatment" in adata.obs.columns:
+    FIG_NAME2 = "05_umap_treatment.png"
     sc.pl.umap(adata, color="treatment", save=f"_{FIG_NAME2}", show=False)
+elif "sample" in adata.obs.columns:
+    FIG_NAME2 = "05_umap_sample.png"
+    sc.pl.umap(adata, color="sample", save=f"_{FIG_NAME2}", show=False)
 else:
-    logging.warning("Metadata 'treatment' not found in adata.obs, skipping treatment plot.")
+    logger.warning(
+        "Metadata 'treatment' and 'sample' not found in adata.obs, skipping treatment/sample plot."
+    )
 
 # -----------------------------
 # Marker Gene Identification
 # -----------------------------
-logging.info(f"Computing marker genes per cluster using {RANK_GENES_METHOD} method")
+logger.info(f"Computing marker genes per cluster using {RANK_GENES_METHOD} method")
 sc.tl.rank_genes_groups(adata, groupby="cluster", method=RANK_GENES_METHOD)
 
 # Save marker gene results to CSV files
@@ -93,14 +102,14 @@ for cluster in clusters:
     df = df[["cluster", "names", "logfoldchanges", "pvals_adj"]]
     df.columns = ["cluster", "gene", "logfoldchanges", "pvals_adj"]
     df.to_csv(MARKER_DIR / f"marker_genes_cluster_{cluster}.csv", index=False)
-    logging.info(f"Saved marker genes for cluster {cluster} with {len(df)} genes")
+    logger.info(f"Saved marker genes for cluster {cluster} with {len(df)} genes")
 
     summary_rows.append(df.head(TOP_N_GENES))
 
 # Save top marker genes summary
 summary_df = pd.concat(summary_rows, ignore_index=True)
 summary_df.to_csv(CSV_FILE, index=False)
-logging.info(f"Saved top {TOP_N_GENES} marker genes summary for all clusters.")
+logger.info(f"Saved top {TOP_N_GENES} marker genes summary for all clusters.")
 
 # -----------------------------
 # Generate HTML Report
@@ -122,22 +131,24 @@ with open(HTML_REPORT, "w") as f:
 
     f.write("<h2>UMAP Plots</h2>\n")
     for fig in figures:
-        f.write(f'<img src="../{fig}" alt="{fig.name}"><br>\n')
+        # Compute relative path from HTML_REPORT to the figure
+        rel_path = os.path.relpath(fig, start=HTML_REPORT.parent)
+        f.write(f'<img src="{rel_path}" alt="{fig.name}"><br>\n')
 
     f.write("<h2>Marker Genes per Cluster</h2>\n<ul>\n")
     for cluster in clusters:
-        f.write(f'<li><a href="../results/markers/marker_genes_cluster_{cluster}.csv">Marker genes for cluster {cluster}</a></li>\n')
+        f.write(f'<li><a href="markers/marker_genes_cluster_{cluster}.csv">Marker genes for cluster {cluster}</a></li>\n')
     f.write("</ul>\n")
 
-    f.write(f'<h2>Summary</h2>\n<p><a href="../results/05_top_marker_genes_summary.csv">Top {TOP_N_GENES} marker genes summary (CSV)</a></p>\n')
+    f.write(f'<h2>Summary</h2>\n<p><a href="05_top_marker_genes_summary.csv">Top {TOP_N_GENES} marker genes summary (CSV)</a></p>\n')
     f.write("</body></html>")
-logging.info(f"Generated HTML report at {HTML_REPORT}")
+logger.info(f"Generated HTML report at {HTML_REPORT}")
 
 # -----------------------------
 # Save the annotated data
 # -----------------------------
 adata.write(OUTPUT_FILE)
-logging.info(f"Saved clustered AnnData object to {OUTPUT_FILE}")
+logger.info(f"Saved clustered AnnData object to {OUTPUT_FILE}")
 
 
 print("✅ Step 5 complete: Clustering and marker gene analysis done and saved.")
