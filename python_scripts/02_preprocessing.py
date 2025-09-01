@@ -1,87 +1,141 @@
-# -----------------------------
-# Step 2: Load datasets (single or multiple) based on SAMPLE_METADATA
-# -----------------------------
+#!/usr/bin/env python3
+"""
+Step 2: Load single-cell datasets (single or multiple samples)
+and merge into a single AnnData object with annotated metadata.
+"""
+
+import json
+import warnings
+from pathlib import Path
+import argparse
 
 import scanpy as sc
 from logzero import logger
-from pathlib import Path
-import warnings
-
 from pipeline_utils import setup_dirs_logs
 
-warnings.simplefilter(action='ignore', category=FutureWarning)
-
-# -----------------------------
-# User-Adjustable Parameters
-# -----------------------------
-#PROJ_NAME = "cropseq" 
-PROJ_NAME = "retina"  
-
-RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("02_log.txt", PROJ_NAME)
-MERGED_DATA_FILE = RESULTS_DIR / "02_merged_data.h5ad"
-METADATA_CSV = RESULTS_DIR / "02_merged_metadata.csv"
-
-# Define metadata here; number of entries determines single vs multiple datasets
-if PROJ_NAME == "cropseq":
-    DATA_DIR = Path(f"data/{PROJ_NAME}/GSE149383")
-    SAMPLE_METADATA = {
-        "GSM3972651_PC9D0": {"batch": "batch1", "treatment": "DMSO", "timepoint": "D0"},
-        "GSM3972652_PC9D3Erl": {"batch": "batch1", "treatment": "Erlotinib", "timepoint": "D3"}
-    }
-elif PROJ_NAME == "retina":
-    DATA_DIR = Path(f"data/{PROJ_NAME}/SRA559821")
-    SAMPLE_METADATA = {
-        "SRA559821": {
-            "tissue": "Retina", 
-            "protocol": "C1_Fluidigm", 
-            "species": "Homo_sapiens", 
-            "instrument": "Illumina_HiSeq2500"
-        }
-    }
-
-logger.info("Step 2 started: Load datasets based on SAMPLE_METADATA")
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 # -----------------------------
-# Load each sample, annotate metadata, and collect AnnData objects
+# Helper Functions
 # -----------------------------
-adatas = []
-for sample_id, meta in SAMPLE_METADATA.items():
-    adata = sc.read_10x_mtx(
-        DATA_DIR,
-        var_names='gene_symbols',
-        cache=True,
-        prefix=f"{sample_id}_"
+def load_metadata_config(metadata_file: Path, proj_name: str):
+    """
+    Load dataset directory and sample metadata from a JSON config file.
+    """
+    if not metadata_file.exists():
+        raise FileNotFoundError(f"Metadata config file not found: {metadata_file}")
+
+    with open(metadata_file, "r") as f:
+        config = json.load(f)
+
+    if proj_name not in config:
+        raise ValueError(f"Project '{proj_name}' not found in {metadata_file}")
+
+    data_dir = Path(config[proj_name]["data_dir"])
+    sample_metadata = config[proj_name]["samples"]
+
+    if not data_dir.exists():
+        logger.warning(f"Data directory does not exist yet: {data_dir}")
+
+    return data_dir, sample_metadata
+
+
+def load_and_annotate_samples(data_dir: Path, sample_metadata: dict):
+    """
+    Load 10X datasets for each sample, annotate metadata,
+    and return a list of AnnData objects.
+    """
+    adatas = []
+    for sample_id, meta in sample_metadata.items():
+        adata = sc.read_10x_mtx(
+            data_dir,
+            var_names="gene_symbols",
+            cache=True,
+            prefix=f"{sample_id}_",
+        )
+        for key, value in meta.items():
+            adata.obs[key] = value
+        adata.obs["sample"] = sample_id
+
+        logger.info(
+            f"Loaded sample '{sample_id}' with {adata.n_obs} cells × {adata.n_vars} genes"
+        )
+        adatas.append(adata)
+    return adatas
+
+
+def merge_adatas(adatas: list, sample_metadata: dict):
+    """
+    Merge a list of AnnData objects into a single AnnData if multiple samples exist.
+    """
+    if len(adatas) > 1:
+        adata_merged = adatas[0].concatenate(
+            adatas[1:],
+            batch_key="sample_id",
+            batch_categories=list(sample_metadata.keys()),
+        )
+        logger.info(
+            f"Merged {len(adatas)} samples: resulting data has "
+            f"{adata_merged.n_obs} cells × {adata_merged.n_vars} genes"
+        )
+    elif len(adatas) == 1:
+        adata_merged = adatas[0]
+    else:
+        raise ValueError("No samples were loaded.")
+    return adata_merged
+
+
+def save_outputs(adata, results_dir: Path):
+    """
+    Save merged AnnData object and its metadata table.
+    """
+    merged_file = results_dir / "02_merged_data.h5ad"
+    metadata_csv = results_dir / "02_merged_metadata.csv"
+
+    adata.write(merged_file)
+    adata.obs.to_csv(metadata_csv)
+
+    logger.info(f"Saved AnnData to '{merged_file}'")
+    logger.info(f"Saved metadata table to '{metadata_csv}'")
+
+
+# -----------------------------
+# Main Pipeline
+# -----------------------------
+def main():
+
+    # Parameters:
+
+    # PROJ_NAME = "cropseq" or "retina_SRA559821" or "retina_GSE137537"
+    parser = argparse.ArgumentParser(
+        description="Step 2: Load and merge scRNA-seq datasets"
     )
-    for key, value in meta.items():
-        adata.obs[key] = value
-    adata.obs["sample"] = sample_id
+    parser.add_argument("project_name", help="Project name as defined in metadata.json")
+    args = parser.parse_args()
 
-    adatas.append(adata)
-    logger.info(f"Loaded sample '{sample_id}' with {adata.n_obs} cells and {adata.n_vars} genes")
+    proj_name = args.project_name
 
-if len(SAMPLE_METADATA) > 1:
-    # -----------------------------
-    # Concatenate all samples into one AnnData object
-    # -----------------------------
-    adata_merged = adatas[0].concatenate(
-        adatas[1:],
-        batch_key="sample_id",
-        batch_categories=list(SAMPLE_METADATA.keys())
-    )
-    logger.info(f"Merged {len(adatas)} samples: resulting data has {adata_merged.n_obs} cells × {adata_merged.n_vars} genes")
+    METADATA_FILE = Path("data/metadata_config.json")
 
-elif len(SAMPLE_METADATA) == 1:
-    adata_merged = adatas[0]
+    # Set up directories and logging
+    RESULTS_DIR, FIGURE_DIR, LOG_FILE = setup_dirs_logs("02_log.txt", proj_name)
+    logger.info("Step 2 started: Load datasets based on SAMPLE_METADATA")
+
+    # Load sample metadata
+    data_dir, sample_metadata = load_metadata_config(METADATA_FILE, proj_name)
+
+    # Load and annotate samples
+    adatas = load_and_annotate_samples(data_dir, sample_metadata)
+
+    # Merge datasets if needed
+    adata_merged = merge_adatas(adatas, sample_metadata)
+
+    # Save outputs
+    save_outputs(adata_merged, RESULTS_DIR)
+
+    logger.info("✅ Step 2 complete: Datasets loaded, merged, and metadata added.")
 
 
-# -----------------------------
-# Save AnnData and metadata CSV
-# -----------------------------
-adatas[0].write(MERGED_DATA_FILE)
-adatas[0].obs.to_csv(METADATA_CSV)
-logger.info(f"Saved AnnData to '{MERGED_DATA_FILE}'")
-logger.info(f"Saved metadata table to '{METADATA_CSV}'")
-    
-
-print("✅ Step 2 complete: Datasets loaded, merged, and metadata added.")
+if __name__ == "__main__":
+    main()
