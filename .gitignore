@@ -44,7 +44,11 @@ htmlcov/
 pip-log.txt
 
 # data/results folders
-data/
-figures/
-results/
+data/*
+!data/.gitkeep
+figures/*
+!figures/.gitkeep
+results/*
+!results/.gitkeep
+python_scripts/*_v*.py
 
