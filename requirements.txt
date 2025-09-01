@@ -11,3 +11,5 @@ numpy==1.26.4    # the latest NumPy version that retains np.float_ and other API
 python-igraph==0.11.9
 leidenalg==0.10.2
 logzero==1.7.0
+pyyaml==6.0.2
+black==25.1.0
