@@ -1,0 +1,32 @@
+# config.yaml
+qc:
+  min_genes: 200
+  max_pct_mt: 10
+  min_cells_per_gene: 3
+
+normalization:
+  n_top_hvg: 2000
+  scale_max: 10
+  n_pcs: 40
+  n_neighbors: 15
+
+clustering:
+  leiden_resolution: 0.5
+  n_neighbors: 15
+  n_pcs: 40
+  rank_genes_method: "wilcoxon"
+  top_n_genes: 10
+
+de:
+  rank_genes_method: "wilcoxon"
+  cutoff_pvals: 0.05
+  cutoff_lfc: 1.0
+
+# config.yaml
+
+gsea:
+  gene_set_library: "KEGG_2016"   # can be KEGG_2016, GO_Biological_Process_2023, etc.
+  min_geneset_size: 15
+  max_geneset_size: 500
+  permutation_num: 100
+  seed: 42

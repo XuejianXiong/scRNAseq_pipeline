@@ -1,46 +1,64 @@
 from pathlib import Path
-import logging
+from logzero import logger, logfile
 import scanpy as sc
 
-def setup_dirs_logs(log_name: str) -> tuple[Path, Path, str]:
-    """
-    Set up pipeline directories, logging, and Scanpy settings.
 
-    This function creates the 'results' and 'figures' directories (if they 
-    do not exist), configures logging to write to the specified log file 
-    within the results directory, and sets Scanpy's plotting parameters.
+def setup_dirs_logs(log_name: str, project: str) -> tuple[Path, Path, Path]:
+    """
+    Initialize project directories, configure logging, and set Scanpy plotting parameters.
+
+    Ensures reproducibility and organization by creating dedicated data, results, and figures
+    directories, configuring logging to a project-specific log file, and setting Scanpy plotting behavior.
 
     Parameters
     ----------
     log_name : str
-        The filename for the log file (e.g., '02_log.txt').
+        Name of the log file (e.g., '02_preprocessing.log').
+    project : str
+        Project or dataset name (e.g., 'cropseq', 'retina'). Directories will be created under
+        'data/{project}', 'results/{project}', and 'figures/{project}'.
 
     Returns
     -------
-    tuple of Path
-        A tuple containing:
-        - RESULTS_DIR : Path
-            Path to the 'results' directory.
-        - FIGURE_DIR : Path
-            Path to the 'figures' directory.
-        - LOG_FILE : str
-            Path of the log file.
+    RESULTS_DIR : Path
+        Path to the results directory.
+    FIGURES_DIR : Path
+        Path to the figures directory.
+    LOG_FILE : Path
+        Path to the log file.
+
+    Raises
+    ------
+    ValueError
+        If project is None or an empty string.
     """
-    RESULTS_DIR = Path("results")
-    FIGURE_DIR = Path("figures")
+    # Validate project
+    if not project or not project.strip():
+        raise ValueError("The 'project' parameter is required and cannot be empty.")
+
+    # Define directories
+    RESULTS_DIR = Path("results") / project
+    FIGURES_DIR = Path("figures") / project
+
+    # Create directories if they do not exist
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Define log file path
     LOG_FILE = RESULTS_DIR / log_name
 
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    FIGURE_DIR.mkdir(parents=True, exist_ok=True)
+    # Configure logzero to log to both console and file
+    logfile(LOG_FILE, mode="w")  # overwrite log file each run
 
-    logging.basicConfig(
-        filename=LOG_FILE,
-        level=logging.INFO,
-        format="%(asctime)s %(message)s"
+    # Log directory setup
+    logger.info(
+        f"Directories initialized: results -> {RESULTS_DIR}, figures -> {FIGURES_DIR}"
     )
+    logger.info(f"Logging configured to write both console and file: {LOG_FILE}")
 
+    # Configure Scanpy plotting
     sc.settings.autoshow = False
-    sc.settings.figdir = str(FIGURE_DIR)
+    sc.settings.figdir = str(FIGURES_DIR)
     sc.settings.verbosity = 2
 
-    return RESULTS_DIR, FIGURE_DIR, LOG_FILE
+    return RESULTS_DIR, FIGURES_DIR, LOG_FILE

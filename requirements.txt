@@ -1,5 +1,6 @@
 # Core
 
+scipy==1.15.3
 scanpy==1.11.2 
 matplotlib==3.10.3
 seaborn==0.13.2
@@ -9,3 +10,6 @@ gseapy==1.1.9
 numpy==1.26.4    # the latest NumPy version that retains np.float_ and other APIs removed in 2.0.
 python-igraph==0.11.9
 leidenalg==0.10.2
+logzero==1.7.0
+pyyaml==6.0.2
+black==25.1.0

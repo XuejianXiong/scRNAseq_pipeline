@@ -44,13 +44,11 @@ htmlcov/
 pip-log.txt
 
 # data/results folders
-data/
-figures/
-results/*.rds
-results/*.h5ad
-results/*_log.txt
-results/*.csv
-results/markers
-results/DE_csv
-results/GSEA
+data/*
+!data/.gitkeep
+figures/*
+!figures/.gitkeep
+results/*
+!results/.gitkeep
+python_scripts/*_v*.py
 
