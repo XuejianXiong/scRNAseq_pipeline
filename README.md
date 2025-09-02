@@ -1,12 +1,25 @@
-# 🔬 Single-cell RNA-seq Analysis Pipeline 
-**Version 2 – Modular Python + Legacy R**  
+# 🔬 Single-cell RNA-seq Analysis Pipeline  
 
-This project presents a complete and reproducible **single-cell RNA-seq (scRNA-seq) analysis pipeline** implemented in both **Python** and **R**. 
+![Version](https://img.shields.io/badge/version-2.0-blue.svg)  
+![Python](https://img.shields.io/badge/python-3.13+-brightgreen.svg)  
+![R](https://img.shields.io/badge/R-4.5.0+-purple.svg)  
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)  
+
+## 📌 Version History
+
+- **[v2.0](https://github.com/yourname/scRNAseq_pipeline/tree/main)** – Modular Python pipeline + legacy R (**current main branch**)  
+- **[v1.0](https://github.com/yourname/scRNAseq_pipeline/tree/feature_qc)** – Original Python + R pipeline (non-modular)  
+
+---
+
+## **Version 2 – Modular Python + Legacy R**
+
+This project provides a complete and reproducible **single-cell RNA-seq (scRNA-seq) analysis pipeline** implemented in both **Python** and **R**.  
 
 - **Version 1 (feature_qc branch):** Original pipeline in **Python and R**, without modular design.  
 - **Version 2 (main branch):** **Modular, robust Python pipeline** with **R scripts unchanged from Version 1**.  
 
-The pipeline processes **multiple scRNA-seq datasets**, including:  
+### **Datasets processed in this pipeline**
 - **CROP-seq data** (CRISPRi + 10x Genomics) from A549 lung cancer cells – *GSE149383*  
 - **Retina datasets**:  
   - *SRA559821* (from [PanglaoDB](https://panglaodb.se/))  
