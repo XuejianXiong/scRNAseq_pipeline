@@ -1,9 +1,9 @@
 # 🔬 Single-cell RNA-seq Analysis Pipeline  
 
-![Version](https://img.shields.io/badge/version-2.0-blue.svg)  
-![Python](https://img.shields.io/badge/python-3.13+-brightgreen.svg)  
-![R](https://img.shields.io/badge/R-4.5.0+-purple.svg)  
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)  
+[![Version](https://img.shields.io/badge/version-2.0-blue.svg)](https://github.com/yourname/scRNAseq_pipeline/releases/tag/v2.0)  
+[![Python](https://img.shields.io/badge/python-3.13+-brightgreen.svg)](https://www.python.org/)  
+[![R](https://img.shields.io/badge/R-4.5.0+-purple.svg)](https://www.r-project.org/)  
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)  
 
 ## 📌 Version History
 
