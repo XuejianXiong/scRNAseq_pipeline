@@ -8,7 +8,7 @@
 ## 📌 Version History
 
 - **[v2.0](https://github.com/XuejianXiong/scRNAseq_pipeline/tree/main)** – Modular Python pipeline + legacy R (**current main branch**)  
-- **[v1.0](https://github.com/yourname/scRNAseq_pipeline/tree/feature_qc)** – Original Python + R pipeline (non-modular)  
+- **[v1.0](https://github.com/yourname/scRNAseq_pipeline/tree/v1.0)** – Original Python + R pipeline (non-modular)  
 
 ---
 
