@@ -1,4 +1,4 @@
-# 🔬 Single-cell RNA-seq Analysis Pipeline  
+# 🔬 Single-Cell RNA-seq Analysis Pipeline for CRISPR Perturbation Screens (CROP-seq)
 
 [![Version](https://img.shields.io/badge/version-2.0-blue.svg)](https://github.com/XuejianXiong/scRNAseq_pipeline/releases/tag/v2.0)  
 [![Python](https://img.shields.io/badge/python-3.13+-brightgreen.svg)](https://www.python.org/)  
